@@ -1,0 +1,7 @@
+.venv/
+.tmp/
+.server.pid
+backend/data/*.db
+backend/.env
+__pycache__/
+*.pyc

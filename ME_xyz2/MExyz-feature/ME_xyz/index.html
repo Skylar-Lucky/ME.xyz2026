@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ME.xyz · 人生模拟器</title>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  @font-face{
+    font-family:'ClashDisplay';
+    src:url('Fonts/WEB/fonts/ClashDisplay-Medium.ttf') format('truetype');
+    font-weight:500;
+    font-style:normal;
+    font-display:swap;
+  }
+  :root{
+    --canvas:#FDFCFC;
+    --canvas-soft:#fafafa;
+    --surface-card:#ffffff;
+    --surface-strong:#f0efed;
+    --ink:#0c0a09;
+    --ink-soft:#292524;
+    --body:#4e4e4e;
+    --muted:#777169;
+    --muted-soft:#a8a29e;
+    --hairline:#e7e5e4;
+    --hairline-strong:#d6d3d1;
+    --on-primary:#ffffff;
+
+    --accent-moss:#6b8f71;
+    --accent-moss-soft:#e7eee8;
+    --accent-slate:#5c7a99;
+    --accent-slate-soft:#e6ecf1;
+    --accent-ochre:#b08a3e;
+    --accent-ochre-soft:#f3ecdd;
+    --accent-plum:#8b7098;
+    --accent-plum-soft:#eee9f1;
+    --accent-rose:#b98289;
+    --accent-rose-soft:#f3e6e7;
+
+    --story-sky:#CAE8FF;
+    --story-mint:#D4F9E1;
+    --story-lavender:#F0D4FF;
+    --story-coral:#FFCACB;
+    --story-sakura:#FFE3F5;
+    --story-vanilla:#FFECBD;
+
+    /* 角色卡片配色：情绪基调复用 story 色板（而非 accent-* 深色），moss/slate/ochre/plum/rose 仅作为语义 key */
+    --card-moss:var(--story-mint);
+    --card-slate:var(--story-sky);
+    --card-ochre:var(--story-vanilla);
+    --card-plum:var(--story-lavender);
+    --card-rose:var(--story-coral);
+
+    --radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-xxl:24px;--radius-pill:9999px;
+    --space-xxs:4px;--space-xs:8px;--space-sm:12px;--space-base:16px;--space-md:20px;--space-lg:24px;--space-xl:32px;--space-xxl:48px;
+
+    --font-display:'Tahoma','PingFang SC','Microsoft YaHei',sans-serif;
+    --font-body:'Tahoma','PingFang SC','Microsoft YaHei',sans-serif;
+    --font-logo:'ClashDisplay','Tahoma','PingFang SC',sans-serif;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--font-body);
+    background:var(--canvas);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--ink); color:#fff;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none;}
+  a{color:inherit; text-decoration:none;}
+
+  /* ---------- Layout shell ---------- */
+  .app{display:flex; flex-direction:column; height:100vh;}
+
+  .top-nav{
+    height:64px; flex-shrink:0;
+    background:var(--canvas);
+    border-bottom:1px solid var(--hairline);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--space-xl);
+  }
+  .logo{
+    font-family:var(--font-logo); font-weight:500; font-size:22px;
+    letter-spacing:0.3px;
+    display:flex; align-items:center; gap:8px;
+    cursor:pointer;
+  }
+
+  .nav-menu{display:flex; align-items:center; gap:2px;}
+  .nav-item{position:relative;}
+  .nav-link{
+    display:flex; align-items:center; gap:5px;
+    padding:9px 16px; border-radius:var(--radius-pill);
+    font-size:15.5px; font-weight:500; color:var(--body);
+    transition:all .18s ease;
+  }
+  .nav-link .caret{font-size:12px; transition:transform .18s ease;}
+  .nav-item:hover .nav-link .caret{transform:rotate(180deg);}
+  .nav-link:hover{color:var(--ink); background:var(--surface-strong);}
+  .nav-link.active{background:var(--accent-slate-soft); color:var(--accent-slate);}
+  .nav-link.active:hover{background:var(--accent-slate-soft); color:var(--accent-slate);}
+  .nav-link.cta{background:var(--ink); color:#fff; margin-left:8px;}
+  .nav-link.cta:hover{background:var(--ink-soft); color:#fff;}
+
+  .nav-dropdown{
+    position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+    background:var(--surface-card); border:1px solid var(--hairline);
+    border-radius:var(--radius-lg); box-shadow:0 12px 32px rgba(0,0,0,.1);
+    padding:6px; opacity:0; visibility:hidden; transform:translateY(-6px);
+    transition:all .18s ease; z-index:10;
+  }
+  .nav-item:hover .nav-dropdown{opacity:1; visibility:visible; transform:translateY(0);}
+  .nav-dropdown-item{
+    display:block; padding:10px 12px; border-radius:var(--radius-md);
+    font-size:15px; color:var(--body);
+  }
+  .nav-dropdown-item:hover{background:var(--surface-strong); color:var(--ink);}
+  .avatar-dropdown{left:auto; right:0;}
+
+  .nav-right{display:flex; align-items:center; gap:12px;}
+  .avatar-btn{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--surface-strong); border:1px solid var(--hairline-strong);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17.5px; color:var(--ink);
+  }
+
+  .view{
+    flex:1; overflow:hidden; display:none;
+  }
+  .view.active{display:flex; flex-direction:column;}
+
+  /* ---------- 首页 ---------- */
+  #view-home{overflow-y:auto;}
+  .home-scroll{max-width:1280px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .home-hero{margin-bottom:var(--space-xxl);}
+  .eyebrow{
+    font-size:13px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:var(--space-sm); display:block;
+  }
+  .home-hero h1{
+    font-family:var(--font-display); font-weight:300; font-size:44px; line-height:1.3;
+    color:var(--ink); max-width:840px;
+  }
+  .home-hero p{
+    margin-top:var(--space-base); font-size:16.5px; color:var(--body); max-width:680px; line-height:1.7;
+  }
+
+  .feature-carousel{display:flex; align-items:center; gap:var(--space-sm);}
+  .feature-track-wrap{flex:1; overflow-x:auto; scroll-behavior:smooth; scrollbar-width:none;}
+  .feature-track-wrap::-webkit-scrollbar{display:none;}
+  .feature-track{display:flex; gap:var(--space-lg);}
+  .carousel-arrow{
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    background:var(--surface-card); border:1px solid var(--hairline-strong);
+    display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--ink);
+    transition:border-color .18s ease, opacity .18s ease;
+  }
+  .carousel-arrow:hover{border-color:var(--ink);}
+  .carousel-arrow:disabled{opacity:.35; cursor:default;}
+  .carousel-arrow:disabled:hover{border-color:var(--hairline-strong);}
+
+  .feature-card{
+    width:340px; flex:0 0 auto;
+    background:var(--surface-card); border:1px solid var(--hairline);
+    border-radius:var(--radius-xl); padding:var(--space-xl);
+    display:flex; flex-direction:column; gap:var(--space-base);
+    cursor:pointer; transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .feature-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06); transform:translateY(-2px);}
+  .feature-icon{
+    width:48px; height:48px; border-radius:var(--radius-lg);
+    background:var(--surface-strong); display:flex; align-items:center; justify-content:center;
+    font-size:24px; color:var(--ink);
+  }
+  .feature-card h3{font-family:var(--font-display); font-weight:400; font-size:24px;}
+  .feature-card p{font-size:15.5px; color:var(--body); line-height:1.6;}
+  .feature-card .go{font-size:14.5px; font-weight:500; color:var(--ink); display:flex; align-items:center; gap:4px; margin-top:auto;}
+
+  .home-strip{
+    margin-top:var(--space-xxl); padding-top:var(--space-xl); border-top:1px solid var(--hairline);
+  }
+  .home-strip h4{font-size:14.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:var(--space-base);}
+  .quote-line{font-family:var(--font-display); font-size:24px; font-weight:300; color:var(--ink-soft); max-width:800px; line-height:1.6;}
+
+  /* ---------- 首页 · Vision Hero ---------- */
+  .hero-vision{margin-bottom:var(--space-xxl); padding-bottom:var(--space-xxl); border-bottom:1px solid var(--hairline);}
+  .hero-vision-top{display:flex; align-items:center; gap:var(--space-xl); flex-wrap:wrap; margin-bottom:var(--space-xl);}
+  .hero-vision-left{flex:1 1 0; min-width:430px;}
+  .hero-vision-left h1{
+    font-family:var(--font-display); font-weight:300; font-size:44px; line-height:1.3;
+    color:var(--ink); max-width:680px; white-space:nowrap;
+  }
+  .hero-vision-actions{display:flex; gap:10px; margin-top:var(--space-lg);}
+  .btn-primary{background:var(--ink); color:#fff; padding:13px 26px; border-radius:var(--radius-pill); font-size:15.5px; font-weight:500;}
+  .btn-primary:hover{background:var(--ink-soft);}
+  .btn-outline{background:transparent; color:var(--ink); padding:13px 26px; border-radius:var(--radius-pill); font-size:15.5px; font-weight:500; border:1px solid var(--hairline-strong); display:inline-flex; align-items:center; gap:6px; transition:all .18s ease;}
+  .btn-outline:hover{border-color:var(--ink); background:var(--ink); color:#fff;}
+  .btn-sm{padding:8px 16px; font-size:14px;}
+  .hero-vision-showcase{
+    flex:2.6 1 0; min-width:320px;
+    background:var(--surface-strong); border:1px solid var(--hairline);
+    border-radius:var(--radius-xxl); overflow:hidden;
+  }
+  .hero-vision-showcase img{display:block; width:100%; height:auto;}
+
+  /* ---------- 记忆图谱 · 功能介绍 ---------- */
+  #view-graph{overflow-y:auto;}
+  .graph-intro-scroll{max-width:1280px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px; min-height:100%; display:flex; align-items:center;}
+  .graph-intro-grid{display:flex; gap:var(--space-xxl); align-items:center; width:100%; flex-wrap:wrap;}
+  .graph-intro-left{flex:1 1 420px; max-width:520px;}
+  .graph-intro-title{font-family:var(--font-display); font-weight:300; font-size:39.5px; line-height:1.3; color:var(--ink); margin-top:12px;}
+  .graph-intro-body{margin-top:var(--space-base); font-size:16px; color:var(--body); line-height:1.75;}
+  .graph-intro-left .btn-primary{margin-top:var(--space-xl);}
+  .graph-intro-right{flex:1 1 420px; min-width:320px; align-self:stretch;}
+  .graph-intro-placeholder{background:var(--surface-strong); border:1px solid var(--hairline); border-radius:var(--radius-xxl); min-height:360px; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .graph-intro-placeholder span{font-size:14.5px; color:var(--muted-soft);}
+  .graph-intro-placeholder img{display:block; width:100%; height:100%; object-fit:cover;}
+  @media (max-width:760px){ .graph-intro-grid{flex-direction:column;} .graph-intro-right{width:100%;} }
+
+  /* ---------- 通用信息页（PainPoints / Team / Vision） ---------- */
+  #view-painpoints{overflow-y:auto;} #view-team{overflow-y:auto;} #view-vision{overflow-y:auto;}
+  .info-scroll{max-width:1280px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .info-hero{margin-bottom:var(--space-xxl);}
+  .info-hero h1{font-family:var(--font-display); font-weight:300; font-size:39.5px; line-height:1.3; color:var(--ink); max-width:none;}
+  .info-hero p{margin-top:var(--space-base); font-size:16.5px; color:var(--body); max-width:none; line-height:1.7;}
+  .info-hero-img{display:block; width:66.7%; height:auto; margin-top:var(--space-lg); border-radius:var(--radius-xl);}
+  .info-section{padding-top:var(--space-xl); margin-top:var(--space-xl); border-top:1px solid var(--hairline);}
+  .info-section h2{font-family:var(--font-display); font-weight:400; font-size:26.5px; margin-bottom:var(--space-sm);}
+  .info-section p{font-size:16px; color:var(--body); line-height:1.75; max-width:none;}
+  .placeholder-note{font-size:14px; color:var(--muted-soft); margin-top:var(--space-sm); font-style:italic;}
+
+  /* ---------- 引述 / Pull-quote ---------- */
+  .pull-quote{
+    font-family:var(--font-display); font-weight:300; font-size:21px; line-height:1.6;
+    color:var(--ink-soft); border-left:2px solid var(--hairline-strong); padding-left:var(--space-base);
+    margin:var(--space-lg) 0;
+  }
+  .info-hero .pull-quote{font-size:18.5px; margin-top:var(--space-lg); margin-bottom:0;}
+
+  /* ---------- 情景故事 Tab 卡片 ---------- */
+  .story-tabs{display:flex; gap:6px; background:var(--surface-strong); padding:4px; border-radius:var(--radius-pill); width:max-content; margin-bottom:var(--space-lg);}
+  .story-tab-btn{padding:8px 18px; border-radius:var(--radius-pill); font-size:15px; font-weight:500; color:var(--body); transition:all .18s ease;}
+  .story-tab-btn:hover{color:var(--ink);}
+  .story-tab-btn.active{background:var(--ink); color:#fff;}
+
+  .story-card{display:none; background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl); padding:var(--space-xl); animation:onbFade .35s ease;}
+  .story-card.active{display:block;}
+  .story-tag{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; letter-spacing:0.6px; text-transform:uppercase; color:var(--ink-soft); padding:4px 10px; border-radius:var(--radius-pill); margin-bottom:var(--space-base);}
+  .story-tag .dot{width:8px; height:8px; border-radius:50%;}
+  .story-title{font-family:var(--font-display); font-style:italic; font-weight:400; font-size:26.5px; margin-bottom:var(--space-base); color:var(--ink);}
+  .story-card p{font-size:16px; color:var(--body); line-height:1.8; margin-bottom:var(--space-base);}
+  .story-card .pull-quote{border-left-width:2px;}
+
+  /* ---------- Why It Matters 编号列表 ---------- */
+  .insight-list{display:flex; flex-direction:column; gap:var(--space-lg);}
+  .insight-item{display:flex; gap:var(--space-base);}
+  .insight-index{font-family:var(--font-display); font-size:15.5px; color:var(--muted-soft); flex-shrink:0; width:24px; padding-top:2px;}
+  .insight-body{font-size:16px; line-height:1.75;}
+  .insight-lead{color:var(--ink-soft); font-weight:600;}
+  .insight-rest{color:var(--body);}
+
+  /* ---------- Team 成员卡片 ---------- */
+  .team-grid{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-lg); margin-top:var(--space-base);}
+  @media (max-width:760px){ .team-grid{grid-template-columns:1fr;} }
+
+  .team-card{background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl); padding:var(--space-xl); display:flex; flex-direction:column;}
+  .team-card.ghost{background:transparent; border:1.5px dashed var(--hairline-strong); justify-content:center; align-items:flex-start; min-height:260px;}
+
+  .team-id-row{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .team-initial{
+    width:46px; height:46px; border-radius:var(--radius-lg); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-logo); font-weight:500; font-size:16.5px; color:var(--ink-soft);
+  }
+  .team-card.ghost .team-initial{border:1.5px dashed var(--hairline-strong); color:var(--muted-soft);}
+  .team-name{font-family:var(--font-display); font-size:22px; font-weight:500; color:var(--ink);}
+  .team-name .en{font-weight:400; color:var(--muted); font-size:15px; margin-left:6px;}
+  .team-card.ghost .team-name{color:var(--muted-soft); font-size:20px;}
+
+  .team-tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:var(--space-base);}
+  .team-tag-group{display:flex; gap:8px;}
+  .team-tag{
+    font-size:14px; font-weight:500; color:var(--ink-soft); background:var(--surface-strong);
+    border:1px solid var(--hairline); padding:6px 13px; border-radius:var(--radius-pill); transition:all .15s ease;
+  }
+  a.team-tag:hover{border-color:var(--ink); background:#fff; color:var(--ink);}
+
+  .team-role-tag{
+    display:inline-flex; align-items:center; font-size:12.5px; font-weight:600; letter-spacing:0.3px; line-height:1.5;
+    padding:6px 12px; border-radius:var(--radius-lg); margin-bottom:6px; max-width:100%; color:var(--ink-soft);
+  }
+  .team-role-desc{font-size:14.5px; color:var(--muted); line-height:1.6; margin-bottom:var(--space-base);}
+
+  .team-quote{
+    font-family:var(--font-display); font-style:italic; font-weight:400; font-size:16px; line-height:1.5; color:var(--muted);
+    margin:4px 0 var(--space-base);
+  }
+
+  .team-bio{font-size:15.5px; color:var(--body); line-height:1.75; margin-bottom:var(--space-base);}
+  .team-bio-center{flex:1; display:flex; align-items:center; justify-content:center; text-align:center; margin-bottom:0;}
+  .team-bio strong{color:var(--ink); font-weight:600;}
+
+  .team-skills{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:var(--space-lg);}
+  .team-skill{font-size:12.5px; color:var(--muted); background:var(--surface-strong); padding:5px 10px; border-radius:var(--radius-sm);}
+
+  .team-links{display:flex; gap:8px; padding-top:var(--space-base); border-top:1px dashed var(--hairline); margin-top:auto;}
+
+  .team-ghost-note{font-size:15px; color:var(--muted-soft); line-height:1.7; margin-top:8px;}
+  .team-ghost-tag{
+    margin-top:var(--space-base); font-size:12.5px; font-weight:500; color:var(--muted);
+    background:var(--surface-strong); padding:5px 12px; border-radius:var(--radius-pill); width:max-content;
+  }
+
+  .team-footer{margin-top:var(--space-xxl); text-align:center; font-size:12.5px; letter-spacing:0.6px; color:var(--muted-soft); text-transform:uppercase;}
+
+  /* ---------- 登录 ---------- */
+  #view-login{overflow-y:auto; align-items:center;}
+  .login-shell{width:100%; max-width:440px; margin:0 auto; padding:64px 24px 60px;}
+  .login-back{display:inline-flex; align-items:center; gap:6px; font-size:14.5px; color:var(--muted); margin-bottom:var(--space-xl);}
+  .login-back:hover{color:var(--ink);}
+  .login-logo{text-align:center; font-family:var(--font-logo); font-weight:500; font-size:22px; margin-bottom:var(--space-xxl); display:flex; align-items:center; justify-content:center; gap:8px;}
+  .login-title{text-align:center; font-family:var(--font-display); font-weight:600; font-size:33px; margin-bottom:var(--space-xl); color:var(--ink);}
+
+  .oauth-btn{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    padding:14px 20px; border:1px solid var(--hairline-strong); border-radius:var(--radius-lg);
+    font-size:16px; font-weight:500; color:var(--ink); background:#fff; margin-bottom:12px; position:relative;
+  }
+  .oauth-btn:hover{border-color:var(--ink);}
+  .oauth-btn .oauth-icon{position:absolute; left:18px; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:20px;}
+
+  .login-divider{display:flex; align-items:center; gap:12px; margin:var(--space-lg) 0; color:var(--muted-soft); font-size:13px;}
+  .login-divider::before,.login-divider::after{content:''; flex:1; height:1px; background:var(--hairline);}
+
+  .field-group{margin-bottom:var(--space-base);}
+  .field-label-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .field-label{font-size:15px; font-weight:500; color:var(--ink-soft);}
+  .field-hint{font-size:13px; font-weight:400; color:var(--muted); margin-left:8px;}
+  .field-link{font-size:14px; color:var(--muted);}
+  .field-link:hover{color:var(--ink);}
+  .field-input-wrap{position:relative;}
+  .field-input{
+    width:100%; border:1px solid var(--hairline-strong); border-radius:var(--radius-lg);
+    padding:12px 16px; font-size:15.5px; font-family:inherit; outline:none; background:#fff;
+  }
+  .field-input:focus{border-color:var(--ink);}
+  .field-eye{position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:18.5px; cursor:pointer;}
+  .field-code-btn{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    font-size:14px; font-weight:500; color:var(--ink); background:var(--surface-strong);
+    padding:8px 14px; border-radius:var(--radius-pill); white-space:nowrap;
+  }
+  .field-code-btn:hover{background:var(--hairline-strong);}
+  .field-code-btn:disabled{color:var(--muted-soft); cursor:default;}
+  .field-code-btn:disabled:hover{background:var(--surface-strong);}
+
+  .btn-submit{width:100%; padding:14px; border-radius:var(--radius-pill); background:var(--muted-soft); color:#fff; font-size:16px; font-weight:600; margin-top:var(--space-sm); transition:background .18s ease;}
+  .btn-submit.ready{background:var(--ink); cursor:pointer;}
+  .btn-submit.ready:hover{background:var(--ink-soft);}
+
+  .login-footer{text-align:center; font-size:14.5px; color:var(--muted); margin-top:var(--space-lg);}
+  .login-footer a{font-weight:500; color:var(--ink); text-decoration:underline;}
+
+  /* ---------- 前置提问 · 弹窗容器 ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100;
+    display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-panel{
+    position:relative; width:520px; max-width:100%; max-height:88vh; overflow-y:auto;
+    background:var(--surface-card); border-radius:var(--radius-xxl); padding:var(--space-xxl) var(--space-xl);
+  }
+  .modal-close{
+    position:absolute; top:18px; right:18px; width:32px; height:32px; border-radius:50%;
+    background:var(--surface-strong); color:var(--muted); display:flex; align-items:center; justify-content:center; font-size:16.5px;
+  }
+  .modal-close:hover{color:var(--ink);}
+  @media (max-width:560px){
+    .modal-panel{width:100%; height:100%; max-height:100%; border-radius:0;}
+  }
+
+  /* ---------- 未来的我 · 角色详情弹窗 ---------- */
+  .persona-modal-panel{width:440px;}
+  .persona-modal-accent{height:4px; width:56px; border-radius:var(--radius-pill); margin-bottom:var(--space-lg);}
+  .persona-modal-title{font-family:var(--font-display); font-weight:400; font-size:26px; margin-top:4px; margin-bottom:8px; color:var(--ink);}
+  .persona-modal-mood{font-size:15px; color:var(--muted); margin-bottom:var(--space-lg); line-height:1.6;}
+  .persona-modal-summary{display:grid; grid-template-columns:96px 1fr; row-gap:10px; column-gap:14px; font-size:14.5px; margin-bottom:var(--space-xl);}
+  .persona-modal-summary dt{color:var(--muted); font-weight:500;}
+  .persona-modal-summary dd{color:var(--body); line-height:1.6;}
+  .persona-modal-question{font-size:15px; color:var(--ink-soft); margin-bottom:var(--space-lg);}
+  .persona-modal-actions{display:flex; gap:12px; justify-content:flex-end;}
+  .persona-modal-actions .btn-outline,.persona-modal-actions .btn-primary{padding:10px 20px; font-size:14.5px;}
+
+  /* ---------- 前置提问 · 通用 ---------- */
+  #view-onboarding{overflow-y:auto;}
+  .onb-host{width:100%; max-width:460px; margin:0 auto; padding:64px 24px 80px;}
+  .modal-panel .onb-host{padding:0; max-width:none;}
+
+  .onb-panel{display:none;}
+  .onb-panel.active{display:block; animation:onbFade .35s ease;}
+  @keyframes onbFade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .onb-title{font-family:var(--font-display); font-weight:400; font-size:28.5px; margin-bottom:8px; color:var(--ink);}
+  .onb-sub{font-size:15.5px; color:var(--muted); margin-bottom:var(--space-xl); line-height:1.6;}
+
+  .onb-field{margin-bottom:var(--space-xl);}
+  .onb-label{display:block; font-size:15px; font-weight:500; color:var(--ink-soft); margin-bottom:8px;}
+
+  .pill-choice-row{display:flex; gap:10px;}
+  .pill-choice{
+    flex:1; padding:12px; border-radius:var(--radius-pill); border:1px solid var(--hairline-strong);
+    background:#fff; font-size:16px; font-weight:500; color:var(--ink-soft); text-align:center; transition:all .15s ease;
+  }
+  .pill-choice.selected{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  /* 生日滚轮 */
+  .wheel-picker{position:relative; display:flex; justify-content:center; gap:6px; height:200px;}
+  .wheel-col{width:84px; height:200px; overflow-y:auto; scroll-snap-type:y mandatory; scrollbar-width:none;}
+  .wheel-col::-webkit-scrollbar{display:none;}
+  .wheel-pad{height:80px; flex-shrink:0;}
+  .wheel-item{
+    height:40px; display:flex; align-items:center; justify-content:center;
+    font-size:18.5px; color:var(--muted-soft); scroll-snap-align:center; opacity:.4; transition:color .1s linear;
+  }
+  .wheel-item.selected{color:var(--ink); font-weight:600; opacity:1;}
+  .wheel-highlight{
+    position:absolute; left:0; right:0; top:80px; height:40px;
+    border-top:1px solid var(--hairline-strong); border-bottom:1px solid var(--hairline-strong); pointer-events:none;
+  }
+
+  .onb-next-btn{margin-top:var(--space-sm);}
+
+  /* Step2 情景题 · 故事感 */
+  #onbStep2{background:#f8f5f1; margin:0 -24px; padding:24px; border-radius:var(--radius-xxl);}
+  .modal-panel #onbStep2{margin:0; background:transparent; padding:0;}
+  .onb-progress{height:3px; background:var(--hairline); border-radius:2px; margin-bottom:10px; overflow:hidden;}
+  .onb-progress-fill{height:100%; background:var(--ink); border-radius:2px; transition:width .3s ease;}
+  .onb-progress-label{font-size:13px; color:var(--muted); margin-bottom:var(--space-lg); text-align:right;}
+
+  .onb-q{display:none;}
+  .onb-q.active{display:block; animation:onbFade .35s ease;}
+  .onb-q-eyebrow{font-size:13px; font-weight:600; letter-spacing:0.6px; color:var(--muted); text-transform:uppercase; margin-bottom:6px;}
+  .onb-q-title{font-family:var(--font-display); font-style:italic; font-weight:400; font-size:28.5px; margin-bottom:14px; color:var(--ink);}
+  .onb-q-text{font-size:16.5px; color:var(--body); line-height:1.7; margin-bottom:var(--space-xl);}
+
+  .onb-option{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:14px 16px; border-radius:var(--radius-lg); border:1.5px solid var(--hairline);
+    background:#fff; margin-bottom:10px; font-size:16px; color:var(--ink-soft); transition:all .15s ease;
+  }
+  .onb-option .emoji{font-size:20px; flex-shrink:0;}
+  .onb-option:hover{border-color:var(--hairline-strong);}
+  .onb-option.selected{border-color:var(--ink); background:var(--surface-strong); font-weight:500; color:var(--ink);}
+
+  .onb-q-nav{display:flex; align-items:center; justify-content:space-between; margin-top:var(--space-lg);}
+  .onb-prev{font-size:15px; color:var(--muted); visibility:hidden;}
+  .onb-prev.show{visibility:visible;}
+  .onb-prev:hover{color:var(--ink);}
+  .onb-q-nav .onb-next-btn{width:auto; padding:11px 22px; margin-top:0;}
+
+  .onb-outro{text-align:center; padding-top:120px;}
+  .onb-outro-text{font-family:var(--font-display); font-weight:300; font-size:26.5px; color:var(--ink-soft);}
+
+  /* ---------- 对话 ---------- */
+  #view-chat{flex-direction:row;}
+  .chat-sidebar{
+    width:260px; flex-shrink:0; background:var(--canvas-soft);
+    border-right:1px solid var(--hairline);
+    display:flex; flex-direction:column; padding:var(--space-base);
+  }
+  .sidebar-primary{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    padding:12px 14px; border-radius:var(--radius-lg);
+    background:var(--ink); color:#fff; font-size:15.5px; font-weight:500;
+    margin-bottom:var(--space-sm);
+  }
+  .sidebar-primary i{font-size:20px;}
+  .sidebar-secondary{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    padding:10px 14px; border-radius:var(--radius-lg);
+    background:transparent; border:1px solid var(--hairline-strong); color:var(--ink-soft); font-size:14.5px; font-weight:500;
+    margin-bottom:var(--space-sm);
+  }
+  #sidebarThoughtTraceBtn{margin-bottom:var(--space-lg);}
+  .sidebar-secondary:hover{background:var(--surface-strong);}
+  .sidebar-secondary i{font-size:18px;}
+  .sidebar-label{font-size:12px; font-weight:600; color:var(--muted-soft); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:var(--space-sm); padding:0 4px;}
+  .main-history{display:flex; flex-direction:column; gap:4px; margin-bottom:var(--space-lg); max-height:180px; overflow-y:auto;}
+  .main-history-item{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:var(--radius-md);
+    border-left:3px solid transparent;
+    font-size:15px; color:var(--body); cursor:pointer;
+  }
+  .main-history-item:hover{background:var(--surface-strong);}
+  .main-history-item.selected{background:#fff; border-left-color:var(--ink); color:var(--ink); font-weight:500;}
+  .role-history{display:flex; flex-direction:column; gap:4px; overflow-y:auto;}
+  .role-history-item{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    padding:10px 12px; border-radius:var(--radius-md);
+    border-left:3px solid transparent;
+    font-size:15px; color:var(--body); cursor:pointer;
+  }
+  .role-history-item:hover{background:var(--surface-strong);}
+  .role-history-item.selected{background:#fff; border-left-color:var(--accent-slate); color:var(--ink); font-weight:500;}
+  .role-history-empty{font-size:14px; color:var(--muted-soft); padding:8px 4px; line-height:1.6;}
+  .rh-main{display:flex; align-items:center; gap:10px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rh-report-btn{
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:var(--radius-sm); color:var(--muted-soft);
+  }
+  .rh-report-btn:hover{background:var(--surface-strong); color:var(--ink);}
+
+  /* ---------- 角色画廊 ---------- */
+  #view-personas{overflow-y:auto;}
+  .personas-scroll{max-width:1280px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .personas-grid{display:flex; flex-wrap:wrap; gap:var(--space-lg); margin-top:var(--space-xl);}
+  .personas-empty{font-size:15.5px; color:var(--muted); line-height:1.7; margin-top:var(--space-lg);}
+  .role-card-foot{
+    margin-top:10px; padding-top:10px; border-top:1px solid var(--hairline);
+    font-size:13.5px; font-weight:500; color:var(--muted); display:flex; align-items:center; gap:6px;
+  }
+  .role-card-foot:hover{color:var(--ink);}
+
+  /* ---------- 思维溯源 ---------- */
+  #view-thoughttrace{overflow-y:auto;}
+  .tt-scroll{max-width:1280px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .tt-title{font-family:var(--font-display); font-weight:300; font-size:36px; line-height:1.3; margin-top:8px; color:var(--ink);}
+  .tt-lead{margin-top:12px; font-size:15px; color:var(--body); max-width:560px; line-height:1.7;}
+  .tt-picker{display:flex; flex-wrap:wrap; gap:var(--space-lg); margin-top:var(--space-xl);}
+  .tt-empty{font-size:15.5px; color:var(--muted); line-height:1.7; margin-top:var(--space-lg);}
+  .tt-locked{opacity:.55; cursor:not-allowed;}
+  .tt-locked:hover{box-shadow:none; transform:none;}
+  .tt-report{max-width:720px; margin-top:var(--space-xl);}
+  .tt-back{font-size:14.5px; color:var(--muted); display:inline-flex; align-items:center; gap:6px; margin-bottom:var(--space-lg);}
+  .tt-back:hover{color:var(--ink);}
+  .tt-chapter{background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl); padding:var(--space-xl); margin-bottom:var(--space-lg);}
+  .tt-chapter-eyebrow{font-size:12px; font-weight:600; letter-spacing:0.6px; text-transform:uppercase; color:var(--muted); margin-bottom:8px;}
+  .tt-chapter h3{font-family:var(--font-display); font-style:italic; font-weight:400; font-size:22px; margin-bottom:10px; color:var(--ink);}
+  .tt-chapter p{font-size:15.5px; color:var(--body); line-height:1.8;}
+  .tt-cta{margin-top:var(--space-xl); text-align:center;}
+
+
+  .chat-main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .chat-header{
+    height:56px; flex-shrink:0; border-bottom:1px solid var(--hairline);
+    display:flex; align-items:center; padding:0 var(--space-xl); justify-content:space-between;
+  }
+  .chat-header-title{font-size:15.5px; font-weight:500; display:flex; align-items:center; gap:8px;}
+  .chat-header-tag{font-size:12px; color:var(--muted); background:var(--surface-strong); padding:3px 9px; border-radius:var(--radius-pill);}
+
+  .chat-body{flex:1; overflow-y:auto; padding:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-md);}
+  .chat-row{display:flex; max-width:640px;}
+  .chat-row.user{align-self:flex-end; flex-direction:row-reverse;}
+  .bubble{
+    padding:12px 16px; border-radius:var(--radius-xl); font-size:16px; line-height:1.65;
+  }
+  .chat-row.agent .bubble{background:var(--surface-card); border:1px solid var(--hairline); border-bottom-left-radius:4px; color:var(--ink-soft);}
+  .chat-row.user .bubble{background:var(--ink); color:#fff; border-bottom-right-radius:4px;}
+
+  .reveal-line{
+    align-self:center; text-align:center; font-family:var(--font-display); font-weight:300; font-size:21px;
+    color:var(--ink-soft); margin:var(--space-md) 0 var(--space-xs);
+  }
+
+  .role-card-row{display:flex; gap:var(--space-base); align-self:center; flex-wrap:wrap; justify-content:center; padding-bottom:var(--space-sm);}
+  .role-card{
+    width:220px; background:var(--surface-card); border:1px solid var(--hairline);
+    border-radius:var(--radius-xl); overflow:hidden; cursor:pointer;
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .role-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.08); transform:translateY(-3px);}
+  .role-card-accent{height:4px;}
+  .role-card-body{padding:16px;}
+  .role-card-title{font-family:var(--font-display); font-size:18.5px; font-weight:400; margin-bottom:6px; line-height:1.4;}
+  .role-card-mood{font-size:13px; color:var(--muted);}
+
+  .chat-input-bar{
+    flex-shrink:0; border-top:1px solid var(--hairline); padding:var(--space-base) var(--space-xl);
+    display:flex; gap:10px; align-items:center;
+  }
+  .chat-input{
+    flex:1; border:1px solid var(--hairline-strong); border-radius:var(--radius-pill);
+    padding:12px 18px; font-size:15.5px; font-family:inherit; outline:none; background:#fff;
+  }
+  .chat-input:focus{border-color:var(--ink);}
+  .send-btn{
+    width:42px; height:42px; border-radius:50%; background:var(--ink); color:#fff;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:20px;
+  }
+  .send-btn:hover{background:var(--ink-soft);}
+
+  .demo-trigger{
+    align-self:center; margin-top:6px; font-size:14px; color:var(--muted);
+    border:1px dashed var(--hairline-strong); border-radius:var(--radius-pill); padding:8px 16px;
+  }
+  .demo-trigger:hover{border-color:var(--ink); color:var(--ink);}
+
+  /* ---------- 我的 ---------- */
+  #view-profile{overflow-y:auto;}
+  .profile-scroll{max-width:840px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .profile-head{display:flex; align-items:center; gap:var(--space-base); margin-bottom:var(--space-xxl);}
+  .profile-avatar{width:64px; height:64px; border-radius:50%; background:var(--surface-strong); display:flex; align-items:center; justify-content:center; font-size:28.5px; border:1px solid var(--hairline-strong);}
+  .profile-head h2{font-family:var(--font-display); font-weight:400; font-size:26.5px;}
+  .profile-head p{font-size:14.5px; color:var(--muted); margin-top:2px;}
+
+  .profile-section{margin-bottom:var(--space-xl);}
+  .profile-section h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:var(--space-sm);}
+  .profile-list{background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl); overflow:hidden;}
+  .profile-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--hairline); font-size:15.5px;
+  }
+  .profile-row:last-child{border-bottom:none;}
+  .profile-row:hover{background:var(--canvas-soft);}
+  .profile-row-left{display:flex; align-items:center; gap:12px;}
+  .profile-row-left i{font-size:20px; color:var(--muted);}
+  .profile-row-val{color:var(--muted); font-size:14.5px;}
+  .chev{color:var(--muted-soft); font-size:17.5px;}
+
+  .reonboard-card{
+    background:var(--ink); color:#fff; border-radius:var(--radius-xl); padding:var(--space-lg);
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-xl);
+  }
+  .reonboard-card h4{font-family:var(--font-display); font-weight:400; font-size:20px; margin-bottom:4px;}
+  .reonboard-card p{font-size:14px; color:var(--muted-soft);}
+  .btn-pill-light{background:#fff; color:var(--ink); padding:9px 18px; border-radius:var(--radius-pill); font-size:14.5px; font-weight:500; white-space:nowrap;}
+
+  @media (max-width:860px){
+    .feature-card{width:78vw;}
+    .chat-sidebar{width:200px;}
+    .hero-vision-top{flex-direction:column;}
+    .hero-vision-left{flex:none; min-width:0; width:100%;}
+    .hero-vision-left h1{white-space:normal;}
+    .hero-vision-showcase{flex:none; min-width:0; width:100%;}
+    .nav-menu{gap:0;}
+    .nav-link span{display:none;}
+  }
+
+  .toast-stack{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999;
+    display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;
+  }
+  .toast{
+    pointer-events:auto; display:flex; align-items:center; gap:8px;
+    padding:11px 18px; border-radius:var(--radius-pill); font-size:14.5px; font-weight:500;
+    background:var(--ink); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.18);
+    opacity:0; transform:translateY(-8px); transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+  .toast-success{background:#1f8a4c;}
+  .toast-error{background:#c0392b;}
+</style>
+</head>
+<body>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="app">
+  <!-- TOP NAV -->
+  <div class="top-nav">
+    <div class="logo" data-view="home">ME.xyz</div>
+    <nav class="nav-menu" id="navMenu">
+      <div class="nav-item">
+        <button class="nav-link active" data-view="home">Home</button>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link" data-view="painpoints">PainPoints<i class="ph ph-caret-down caret"></i></button>
+        <div class="nav-dropdown">
+          <a class="nav-dropdown-item" data-view="painpoints" data-anchor="anchor-genz-story">Gen Z's Story</a>
+          <a class="nav-dropdown-item" data-view="painpoints" data-anchor="anchor-why-matters">Why It Matters</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link" data-view="team">Team<i class="ph ph-caret-down caret"></i></button>
+        <div class="nav-dropdown">
+          <a class="nav-dropdown-item" data-view="team" data-anchor="anchor-who-we-are">Who We Are</a>
+          <a class="nav-dropdown-item" data-view="team" data-anchor="anchor-why-we-did-this">Why We Did This</a>
+          <a class="nav-dropdown-item" data-view="team" data-anchor="anchor-where-going">Where We're Going</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link" data-view="vision">Vision</button>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link cta" id="getStartedBtn" type="button">Get Started</button>
+      </div>
+    </nav>
+    <div class="nav-right">
+      <div class="nav-item">
+        <button class="avatar-btn"><i class="ph ph-user"></i></button>
+        <div class="nav-dropdown avatar-dropdown">
+          <a class="nav-dropdown-item" data-view="personas">未来的我</a>
+          <a class="nav-dropdown-item" data-view="graph">记忆图谱</a>
+          <a class="nav-dropdown-item" data-view="thoughttrace">思维溯源</a>
+          <a class="nav-dropdown-item" data-view="profile">我的</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 首页 -->
+  <div class="view active" id="view-home">
+    <div class="home-scroll">
+      <div class="hero-vision">
+        <div class="hero-vision-top">
+          <div class="hero-vision-left">
+            <h1>做选择前，<br>先认识未来的自己。</h1>
+            <div class="hero-vision-actions">
+              <button class="btn-primary" data-view="login">Log in</button>
+              <button class="btn-outline" data-view="team" data-anchor="anchor-who-we-are">Contact Builder</button>
+            </div>
+          </div>
+          <div class="hero-vision-showcase">
+            <img src="/assets/images/home_01_newratio.png" alt="产品展示图">
+          </div>
+        </div>
+      </div>
+
+      <div class="home-hero">
+        <span class="eyebrow">给 GenZ 的人生模拟器</span>
+        <h1>我们从何处来？<br>我们向何处去？</h1>
+        <p>生活不是寻找自我，而是创造自我。把犹豫说出来，我们先接住情绪，再一起看清有哪些"未来的自己"正在等你。</p>
+      </div>
+
+      <div class="feature-carousel">
+        <button class="carousel-arrow" id="carouselPrev" aria-label="上一个"><i class="ph ph-caret-left"></i></button>
+        <div class="feature-track-wrap" id="featureTrackWrap">
+          <div class="feature-track" id="featureTrack">
+            <div class="feature-card" data-goto="chat">
+              <div class="feature-icon" style="background:var(--story-sky)"><i class="ph ph-chats-circle"></i></div>
+              <h3>开启对话</h3>
+              <p>说说你正在纠结的选择。倾诉之后，我们先接住你的情绪。</p>
+              <div class="go">进入对话 <i class="ph ph-arrow-right"></i></div>
+            </div>
+            <div class="feature-card" data-goto="graph">
+              <div class="feature-icon" style="background:var(--story-mint)"><i class="ph ph-graph"></i></div>
+              <h3>记忆图谱</h3>
+              <p>沉淀每一次对话，看见自己反复出现的念头和循环。</p>
+              <div class="go">查看记忆图谱 <i class="ph ph-arrow-right"></i></div>
+            </div>
+            <div class="feature-card" data-goto="personas">
+              <div class="feature-icon" style="background:var(--story-lavender)"><i class="ph ph-sparkle"></i></div>
+              <h3>未来的我</h3>
+              <p>基于你的对话，具象化出几个不同选择下"未来版本的你"。</p>
+              <div class="go">查看未来的我 <i class="ph ph-arrow-right"></i></div>
+            </div>
+            <div class="feature-card" data-goto="thoughttrace">
+              <div class="feature-icon" style="background:var(--story-vanilla)"><i class="ph ph-door-open"></i></div>
+              <h3>思维溯源</h3>
+              <p>把这段时间的对话沉淀成一份专属故事总结，找到反复出现的循环，看清打破它的关键一步。</p>
+              <div class="go">查看思维溯源 <i class="ph ph-arrow-right"></i></div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-arrow" id="carouselNext" aria-label="下一个"><i class="ph ph-caret-right"></i></button>
+      </div>
+
+      <div class="home-strip">
+        <h4>本周的一句话</h4>
+        <p class="quote-line">"你不是在等一个答案，你是在等一个足够熟悉的自己，替你先走一遍。"</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 对话 -->
+  <div class="view" id="view-chat">
+    <div class="chat-sidebar">
+      <button class="sidebar-primary" id="sidebarNewMainBtn" type="button"><i class="ph ph-plus-circle"></i>新建主聊天</button>
+      <button class="sidebar-secondary" id="sidebarMemoryGraphBtn" type="button"><i class="ph ph-lightbulb"></i>记忆图谱</button>
+      <button class="sidebar-secondary" id="sidebarFutureSelfBtn" type="button" data-view="personas"><i class="ph ph-user"></i>未来的我</button>
+      <button class="sidebar-secondary" id="sidebarThoughtTraceBtn" type="button"><i class="ph ph-scroll"></i>思维溯源</button>
+      <div class="sidebar-label">主对话</div>
+      <div class="main-history" id="mainHistory"></div>
+      <div class="sidebar-label">未来的自己 · 已开聊</div>
+      <div class="role-history" id="roleHistory">
+        <div class="role-history-empty">点选角色卡片后，才会在这里出现独立会话。</div>
+      </div>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <div class="chat-header-title"><i class="ph ph-chat-circle-dots"></i> 主聊天</div>
+        <div class="chat-header-tag">先倾听 · 再给新视角</div>
+      </div>
+
+      <div class="chat-body" id="chatBody">
+        <div class="role-card-row" id="roleCardRow"></div>
+        <button class="demo-trigger" id="revealBtn"><i class="ph ph-sparkle"></i> 生成"未来的自己"</button>
+        <button class="demo-trigger" id="organizeMemoryBtn" type="button"><i class="ph ph-brain"></i> 整理记忆</button>
+      </div>
+
+      <div class="chat-input-bar">
+        <input class="chat-input" id="chatInput" type="text" placeholder="说说你现在的纠结……" />
+        <button class="send-btn" id="sendBtn" type="button"><i class="ph ph-arrow-up"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 记忆图谱 · 功能介绍 -->
+  <div class="view" id="view-graph">
+    <div class="graph-intro-scroll">
+      <div class="graph-intro-grid">
+        <div class="graph-intro-left">
+          <span class="eyebrow">记忆图谱</span>
+          <h1 class="graph-intro-title">把每一次对话，沉淀成看得见的图谱</h1>
+          <p class="graph-intro-body">记忆图谱把你在对话里提到的事件、念头和情绪连成节点与关系，帮你回看自己反复出现的循环，而不是让这些线索散落在聊天记录里。</p>
+          <button class="btn-primary" id="graphGetStartedBtn" type="button">Get Started</button>
+        </div>
+        <div class="graph-intro-right">
+          <div class="graph-intro-placeholder"><img src="/assets/images/braingraph_mock.png" alt="记忆图谱产品截图"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 未来的我 · 画廊 -->
+  <div class="view" id="view-personas">
+    <div class="personas-scroll">
+      <span class="eyebrow">未来的我</span>
+      <h1 style="font-family:var(--font-display);font-weight:300;font-size:36px;line-height:1.3;margin-top:8px;">所有未来版本的你</h1>
+      <p style="margin-top:12px;font-size:15px;color:var(--body);max-width:520px;line-height:1.7;">在主对话中生成的角色会汇集到这里。点选一张卡片，才会开启与那位「未来的自己」的独立对话。</p>
+      <div class="personas-grid" id="personasGrid"></div>
+      <p class="personas-empty" id="personasEmpty">还没有角色卡片。先去主聊天聊聊你的纠结，再生成「未来的自己」。</p>
+    </div>
+  </div>
+
+  <!-- 思维溯源 -->
+  <div class="view" id="view-thoughttrace">
+    <div class="tt-scroll">
+      <span class="eyebrow">思维溯源</span>
+      <h1 class="tt-title">打破思维循环</h1>
+      <p class="tt-lead">选一个"未来的自己"，看看这段时间里，你们一起走过的循环与突破——像一份专属的年度总结。</p>
+
+      <div class="tt-picker" id="ttPicker"></div>
+      <p class="tt-empty" id="ttEmpty" style="display:none;">还没有可生成报告的角色。先去主聊天，和某个「未来的自己」多聊几轮，攒够故事后再回来看看。</p>
+
+      <div class="tt-report" id="ttReport" style="display:none;">
+        <button class="tt-back" id="ttBackToPicker" type="button"><i class="ph ph-arrow-left"></i> 换一个角色</button>
+        <div class="story-tag" id="ttReportTag"></div>
+        <h2 class="story-title" id="ttReportTitle"></h2>
+        <div id="ttReportBody"></div>
+        <div class="tt-cta">
+          <button class="btn-primary" id="ttBackToChat" type="button">回到对话，继续聊</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的 -->
+  <div class="view" id="view-profile">
+    <div class="profile-scroll">
+      <div class="profile-head">
+        <div class="profile-avatar"><i class="ph ph-user"></i></div>
+        <div>
+          <h2>访客用户</h2>
+          <p>已完成 5 题前置问题 · 生成 2 个未来角色</p>
+        </div>
+      </div>
+
+      <div class="reonboard-card">
+        <div>
+          <h4>重新认识自己</h4>
+          <p>重新回答 5 个前置问题，更新你的画像标签</p>
+        </div>
+        <button class="btn-pill-light">开始</button>
+      </div>
+
+      <div class="profile-section">
+        <h4>账号</h4>
+        <div class="profile-list">
+          <div class="profile-row">
+            <div class="profile-row-left"><i class="ph ph-pencil-simple"></i>编辑个人资料</div>
+            <i class="ph ph-caret-right chev"></i>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-left"><i class="ph ph-envelope-simple"></i>绑定邮箱</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="profile-row-val">demo@me.xyz</span>
+              <i class="ph ph-caret-right chev"></i>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-left"><i class="ph ph-lock-simple"></i>账号与安全</div>
+            <i class="ph ph-caret-right chev"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h4>其他</h4>
+        <div class="profile-list">
+          <div class="profile-row">
+            <div class="profile-row-left"><i class="ph ph-bell-simple"></i>通知设置</div>
+            <i class="ph ph-caret-right chev"></i>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-left"><i class="ph ph-question"></i>帮助与反馈</div>
+            <i class="ph ph-caret-right chev"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PainPoints -->
+  <div class="view" id="view-painpoints">
+    <div class="info-scroll">
+      <div class="info-hero">
+        <h1>"我们不缺选项，缺的是一个真正懂我、敢说真话的自己人。"</h1>
+        <p>每一次站在人生的分岔口，或者刚刚翻过一座山头之后，GenZ 最怕的不是选错路，而是发现身边没有一个人，能真正接住自己乱糟糟的情绪、看穿心里没说出口的执念，并且诚实地告诉自己：这条路我试过了，你可以的。</p>
+        <p class="pull-quote">"在最需要帮助的时候，没有向身边人求助。对朋友，不想打破自己 effortless &amp; positive 的形象；对同龄人，得到的答案都很浅；对前辈，代际隔阂明显，答案驴唇不对马嘴。"</p>
+      </div>
+
+      <div class="info-section" id="anchor-genz-story">
+        <h2>Gen Z's Story</h2>
+        <p>凌晨两点，你又一次点开了手机。屏幕上是第八条"要不要转专业/要不要读博/要不要去大厂"的帖子，评论区一半人说"趁早止损"，一半人说"再撑一下"。你把这些观点在脑子里过了一遍又一遍，发现一条都用不上，因为没有一条是关于你的。</p>
+        <p>你不是没有选择，你是选择太多，却没有一把真正属于自己的尺子。你看过热门方向年薪百万的造富故事，也看过"这个专业已经没有应届生机会了"的劝退帖；你羡慕过行业峰会上意气风发的人设，也被一句"等你读完书风口都过去了"堵得说不出话。你开始怀疑，自己纠结的方向到底值不值得。</p>
+        <p>更难的是，有时候你以为熬过了最难的关卡，故事就该翻篇了，直到梦校 offer 真的到手，你才发现，山顶之后是更空的空。你开始给自己找新的目标填满日程，表面上很努力，其实只是在用忙碌逃避一个更根本的问题：下一步，到底是为了谁而走。</p>
+        <p>而这一切，你几乎没有对任何人说完整过。跟朋友说，怕打破自己"毫不费力、永远积极"的人设，也怕成为对方的情绪负担；跟同龄人聊，得到的答案总是很浅，接不住问题的重量；跟长辈请教，代际隔阂让答案"驴唇不对马嘴"。互联网上从不缺经验贴和情绪树洞，可它们要么是别人的人生，要么聊完就忘，没有一个角色真正陪你走过这段路，也没人为你的选择结果负责。</p>
+        <p>你要的从来不是一个给方案的人，也不是一个顺着你说"你很棒"的机器人。你要的是一个真正利益攸关的自己人——他了解你所有的借口，因为他就是替你走过这条路、承受过代价的未来的你。</p>
+
+        <div class="story-tabs" id="storyTabs">
+          <button type="button" class="story-tab-btn active" data-story="0">Story A</button>
+          <button type="button" class="story-tab-btn" data-story="1">Story B</button>
+          <button type="button" class="story-tab-btn" data-story="2">Story C</button>
+        </div>
+
+        <div class="story-card active" data-story="0">
+          <div class="story-tag" style="background:var(--story-sky)"><span class="dot" style="background:#5b9bd5"></span>STORY A</div>
+          <div class="story-title">不敢选的你</div>
+          <p>你曾经也是那个"方向感很强"的人。计算机是你早早认定的路，可最近你却越来越说不清自己为什么要坚持。你刷到过学计算机做量化、年薪百万的故事，也刷到过各路博主说"初级岗位已经没有机会了，千万别学计算机"的劝退帖；你在行业峰会上见过意气风发的精英，也被一位名校毕业生随口一句"等你读完书 AI 都过去了"噎得说不出话。偶尔家人看到行业新闻，也会拿别人的成功来敲打你两句。</p>
+          <p>真正让你焦虑的，其实不是这条路本身，而是你感兴趣的方向不够"硬核"——你不敢放弃已经学了这么久的计算机，却也找不到真正想做的细分方向；想过转去感兴趣的自然科学，但成本太高；有些明明可行的路（比如金融），你却怎么也提不起兴趣。你陷入一种"明知道有路，却不知道该往哪走"的怪圈——不是没有选择，是不敢选，是没有依据判断哪条适合自己，更是没有人真正在乎过你心里的这团乱麻。</p>
+          <p class="pull-quote">"看到的是学这个方向做出年包几百万的高薪，从事前沿研究的光鲜，行业峰会上的社会精英人设……不得不说确实有实力；看到的是各大博主唱衰这个方向，说初级岗位已经没有入门机会了，千万不要学。"</p>
+        </div>
+
+        <div class="story-card" data-story="1">
+          <div class="story-tag" style="background:var(--story-lavender)"><span class="dot" style="background:#a76fd6"></span>STORY B</div>
+          <div class="story-title">选择太多的你</div>
+          <p>升学还是就业？出国还是留下？读博还是直接工作？追热门方向还是守着自己真正喜欢的领域？每一条路你都认真研究过，也都能说出它吸引你和让你担心的地方——可越比较，你越分不清哪条路"更适合自己"。</p>
+          <p>你开始不停地搜索、不停地比较，为每一个选项找出新的顾虑，却始终得不到一个"绝对正确"的答案。你害怕的不只是失败，更是害怕这是一个不可逆的决定——如果未来证明自己选错了怎么办？如果本可以拥有另一种更好的人生怎么办？这种对"没有选的那条路"的持续想象，让你很难真正投入眼前的生活。</p>
+          <p>更深处，你甚至说不清"我究竟想成为谁"——科学家、创业者、工程师、管理者，你好像都有可能，却没有一个是确定的自己。想找人聊，朋友们各自忙着不同阶段的人生，给不出真正适合你的建议；网上的经验太碎片化，没有一个声音能持续理解"你的人生"；家人的期待又格外强烈——尤其是身为女性，"考公、进稳定行业、早点安定下来"的声音无处不在，让你在一条本就充满不确定的路上，连最亲近的人的支持都很难获得。</p>
+          <p class="pull-quote">"如果这是一个不可逆的决定怎么办？如果未来证明我选错了怎么办？如果我本来可以拥有另一种更好的人生怎么办？"</p>
+        </div>
+
+        <div class="story-card" data-story="2">
+          <div class="story-tag" style="background:var(--story-mint)"><span class="dot" style="background:#4fae7a"></span>STORY C</div>
+          <div class="story-title">选对了却更空虚的你</div>
+          <p>你曾以为，只要拿到那份梦校 offer，所有的焦虑就会有答案。大三大四那两年，你经历过不知所措、努力锚定方向、自我肯定又自我否定的反复拉扯——直到 offer 真的落地，你获得了前所未有的成就感。可这种极乐感只持续了两三个月，紧接着，是一场你完全没有准备好的巨大空虚。</p>
+          <p>你开始用"看似充实实则逃避"的方式填满自己——接一堆兼职、给自己设定更高的目标：面试大厂、疯狂拓展人脉。可你心里清楚，这些安排的本质，还是在用外界的标准要求自己。直到有一天，你彻底撑不住了，掉进了一段前所未有的迷茫期。</p>
+          <p>而在最需要帮助的那段时间，你没有向任何人求助——你太习惯维持"毫不费力、永远积极"的形象，不想让朋友看到脆弱，更不想成为高敏感朋友们的情绪负担；跟同龄人试探性聊过人生意义，得到的答案总是太浅，接不住问题的重量；找长辈请教过，代际隔阂又让答案"驴唇不对马嘴"。真正让你走出来的，不是任何一个解决方案，而是一次"被看见"——一位学者在访谈里坦白自己也有同样的自我拷问，还有书店里偶然瞥到的一句话："生活不是寻找自我，而是创造自我。"</p>
+          <p class="pull-quote">"极乐感之后陷入巨大空虚，用"看似充实实则逃避"的安排对抗虚无……最终心理彻底崩盘，进入前所未有的迷茫期。"</p>
+        </div>
+      </div>
+
+      <div class="info-section" id="anchor-why-matters">
+        <h2>Why It Matters</h2>
+        <ol class="insight-list">
+          <li class="insight-item">
+            <span class="insight-index">01</span>
+            <span class="insight-body"><span class="insight-lead">你不是选择太多，是缺一把只属于自己的尺子。</span> <span class="insight-rest">攻略、经验贴、成功案例，你看过的可能比谁都多。但别人的答案回答不了"这适不适合我"——你缺的从来不是信息，是一套能把这些信息翻译成"你自己的判断"的方法。</span></span>
+          </li>
+          <li class="insight-item">
+            <span class="insight-index">02</span>
+            <span class="insight-body"><span class="insight-lead">你怕的不是失败，是"没有回头路"这种错觉。</span> <span class="insight-rest">当你把每一个决定都想象成一次不能重来的悬崖，你自然会不敢动。但真正困住你的，往往不是风险本身，而是你把风险看得比实际更不可逆。</span></span>
+          </li>
+          <li class="insight-item">
+            <span class="insight-index">03</span>
+            <span class="insight-body"><span class="insight-lead">你要的不是被哄好，是被真正看见。</span> <span class="insight-rest">"你很棒""加油"这种话你听得够多了，也清楚说这话的人不用为你的人生负责。真正让你松一口气的，从来是有人愿意坦白——ta 也曾这样拷问过自己，而不是丢给你一个标准答案。</span></span>
+          </li>
+          <li class="insight-item">
+            <span class="insight-index">04</span>
+            <span class="insight-body"><span class="insight-lead">你不是不会社交，是身边真的没有这样一个角色。</span> <span class="insight-rest">你需要的对话对象要同时做到三件事：<strong>不用小心翼翼、够有深度、没有代沟。</strong>朋友怕给对方添负担，同龄人接不住问题的重量，长辈隔着一代人的经验差——这不是你人际关系出了问题，是现实里本来就没有一个角色能同时满足这三点。</span></span>
+          </li>
+          <li class="insight-item">
+            <span class="insight-index">05</span>
+            <span class="insight-body"><span class="insight-lead">你想要的"拉一把"，是被自己说服，不是被说教。</span> <span class="insight-rest">你不需要有人直白地告诉你"你这个想法有点极端"——那只会让你想反驳。你需要的是慢慢意识到不对劲，然后自己往前走一步。这也是为什么，先接住情绪、再给新视角，中间的顺序不能颠倒。</span></span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team -->
+  <div class="view" id="view-team">
+    <div class="info-scroll">
+      <div class="info-hero">
+        <h1>你想活出怎样的人生？</h1>
+        <img class="info-hero-img" src="/assets/images/team_intro.png" alt="团队介绍">
+      </div>
+      <div class="info-section" id="anchor-who-we-are">
+        <h2>Who We Are</h2>
+
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-id-row">
+              <div class="team-initial" style="background:var(--story-sky)">SD</div>
+              <div class="team-name">Skylar Dong <span class="en">董楚垚</span></div>
+            </div>
+            <p class="team-quote">"The universe is a continuous web, touch it, and all quivers."</p>
+            <div class="team-tags">
+              <a class="team-tag" href="https://mashable.com/article/fuzozo-ai-emotional-companion-ces-2026" target="_blank" rel="noopener">👩🏻‍💻 AI PM @FUZOZO芙崽</a>
+              <a class="team-tag" href="https://xhslink.cn/m/2CwsnwU2EMk" target="_blank" rel="noopener">🛠️ Co-builder @她原力She Rewires</a>
+              <div class="team-tag-group">
+                <a class="team-tag" href="https://fie.must.edu.mo/" target="_blank" rel="noopener">🎓 本科 MUST🇲🇴FIE</a>
+                <a class="team-tag" href="https://engineering.nyu.edu/" target="_blank" rel="noopener">🎓 研究生 NYU🇺🇸TANDON</a>
+              </div>
+              <span class="team-tag">💭 HCI研究者👩🏻‍🔬产品设计师👩🏻‍🍳用户饲养员</span>
+            </div>
+            <div class="team-role-tag" style="background:var(--story-sky)">本次角色 · PM / Product Design / Full Stack Developer</div>
+            <p class="team-bio"><strong>灵感永不枯竭：</strong>ME.xyz 的产品想法于 2026 年 7 月 12 日诞于我的脑暴，从 0 到 1 定义了产品全部功能模块，也是团队里所有需求的推动者。</p>
+            <p class="team-bio"><strong>AI PM &amp; Team Leader：</strong>一天要做 800 个决策，400 次和自己博弈，热爱高质量思维碰撞、讨厌无意义争辩。产品体验不好，请直接冲我来，那是我最熟悉的、和用户相爱相杀的日常。</p>
+            <p class="team-bio"><strong>UI&amp;UX 极简美学玩家：</strong>滚动、点击、留白，每一处分寸都出自我手。</p>
+            <p class="team-bio"><strong>全栈Debug兜底人员：</strong>不知道，这个小PM会魔法。</p>
+            <p class="team-bio"><strong>你也迷失在这个星球了吗？没关系，我们终将成为后人类社会的养料。</strong></p>
+            <div class="team-skills">
+              <span class="team-skill">0→1 Alchemist</span>
+              <span class="team-skill">Pixel Perfectionist</span>
+              <span class="team-skill">Chief Pusher</span>
+              <span class="team-skill">Future Fertilizer</span>
+            </div>
+          </div>
+
+          <div class="team-card">
+            <div class="team-id-row">
+              <div class="team-initial" style="background:var(--story-mint)">SZ</div>
+              <div class="team-name">Skylar Zhao <span class="en">赵石韵</span></div>
+            </div>
+            <p class="team-quote">"The world is my oyster."</p>
+            <div class="team-tags">
+              <span class="team-tag">18 years old</span>
+              <span class="team-tag">🎓 BNU Math24</span>
+              <span class="team-tag">🔬 RA @HKUSTGZ AI Hub</span>
+              <span class="team-tag">🔬 RA @Tsinghua AIR</span>
+              <span class="team-tag">🥇 iGEM25er Gold Medal</span>
+            </div>
+            <div class="team-role-tag" style="background:var(--story-mint)">本次角色 · Braingraph Developer</div>
+            <p class="team-role-desc">负责搭建可交互的 Braingraph 脑图系统、设计并构建 Agent Skills、完成前后端开发与功能联调。</p>
+            <p class="team-bio">一名对创业和从 0 到 1 创造新事物充满兴趣的 researcher，喜欢探索人工智能、类脑智能、认知科学与人机交互等交叉领域。对"人类如何思考，机器能否理解人，以及技术将如何改变人与世界的关系"始终保持好奇。希望在脑认知科学与人工智能之间寻找新的连接，把对认知与智能的探索转化为真正有趣、有人味，也能够产生现实价值的技术与产品。</p>
+            <p class="team-bio">科幻爱好者，喜欢刘慈欣的作品和科幻电影，喜欢提出问题、搭建系统，并尝试用研究和代码探索新的可能性。</p>
+            <p class="team-bio"><strong>Let's build the future！</strong></p>
+            <div class="team-skills">
+              <span class="team-skill">AI × Brain Explorer</span>
+              <span class="team-skill">0→1 Builder</span>
+              <span class="team-skill">Sci-Fi Dreamer</span>
+            </div>
+          </div>
+
+          <div class="team-card">
+            <div class="team-id-row">
+              <div class="team-initial" style="background:var(--story-vanilla)">TC</div>
+              <div class="team-name">Terry <span class="en">陈天予</span></div>
+            </div>
+            <p class="team-quote">"让 AI 做好人，用 AI 做善事。"</p>
+            <div class="team-tags">
+              <span class="team-tag">💜 NYU Co29 · Violet Pride</span>
+              <span class="team-tag">👾 DIC 数字创新社团 President</span>
+              <span class="team-tag">🎓 JetBrains 校园大使</span>
+              <span class="team-tag">👽 S 创中国核心志愿者</span>
+              <span class="team-tag">👨‍💻 AI PM @AI4GOOD</span>
+            </div>
+            <div class="team-role-tag" style="background:var(--story-vanilla)">本次角色 · AI Solution Engineer</div>
+            <p class="team-role-desc">负责 Agent 后端、Skill 开发与 AI 能力落地。</p>
+            <p class="team-bio">这是我刚进入 AI4GOOD 时听到的一句话，也是我一直记到现在的一句话。回头看大一这一年，我好像一直在用 AI 做一些"疯狂"的事情：参加黑客松、构建医疗智能体、办 AI Agent 大赛、跑各种技术展会，也和一群很厉害的人一起搭建技术社区。勉强也可以算是一个 AI Native。</p>
+            <p class="team-bio">但真正让我开心的，从来不是用了多新的模型、多复杂的技术，而是它影响了多少人。从最开始做一些自己觉得好玩的小游戏，到激发身边同学开始创作；从帮助企业解决真实问题，到慢慢搭建一个 AI 社群。我开始意识到，技术真正有价值的时候，是它走进了人的生活。</p>
+            <p class="team-bio">我现在对大模型应用、NeuroHCI 这些方向都很感兴趣。它们看起来很不一样，但对我来说，本质上都在回答同一个问题：AI，如何更好地理解人，又如何更好地帮助人。</p>
+            <p class="team-bio"><strong>希望这个深陷 AI 焦虑的世界，除了效率和智能，也能多一点善意。</strong></p>
+          </div>
+
+          <div class="team-card">
+            <div class="team-id-row">
+              <div class="team-initial" style="background:var(--story-coral)">SC</div>
+              <div class="team-name">Shali Chen <span class="en">超级莉</span></div>
+            </div>
+            <p class="team-quote">"大厂在职中登，努力拥抱 ai 的小销售。"</p>
+            <div class="team-tags">
+              <span class="team-tag">🏢 BAT 大厂打卡 2 家</span>
+              <span class="team-tag">📈 操盘亿级商业化项目</span>
+              <span class="team-tag">🎬 AI 剪辑爱好者</span>
+            </div>
+            <div class="team-role-tag" style="background:var(--story-coral)">本次角色 · 方案策划 / 视觉设计</div>
+            <p class="team-bio team-bio-center"><strong>别的不多说了，我们项目很牛逼。</strong></p>
+          </div>
+        </div>
+
+        <p class="team-footer">Made of the same web — touch any one of us, it quivers</p>
+      </div>
+      <div class="info-section" id="anchor-why-we-did-this">
+        <h2>Why We Did This</h2>
+        <p>我们做这件事，是因为我们自己就是这群人。</p>
+        <p>我们的核心用户，是正处在探索期的 GenZ——还在读本科、研究生的学生，也包括刚毕业 3-5 年、还没找准方向的职场新人。这个阶段本该是"完全探索"的自由期，却常常变成迷茫和执念的高发期：一边是被算法放大的"外表光鲜"人生模板，让人不自觉地用功利的标准审视自己的每一步；一边是互联网信息过载到失去判断力——能查到无数条路，却查不到哪条适合自己。</p>
+        <p>更隐蔽的一种循环是：好不容易达成了一个阶段性成就，短暂的空虚感却接踵而至，你开始用更高的目标自我施压，直到彻底崩盘，掉进下一轮迷茫。</p>
+        <p>而在这些时刻，我们发现自己最需要、却始终找不到的，是一个同时满足"没有社交成本 + 有深度 + 无代际隔阂"的对话对象——朋友怕成为负担，同龄人接不住问题的重量，长辈隔着一代人的经验差，互联网上的建议千篇一律，却没有一条是关于"我"的。</p>
+        <p>决策瘫痪、找不到同频倾诉对象、分不清自我需求和外界期待的边界——这三类痛点不是我们某一个人的偶然经历，而是这一代人普遍共有的结构性困境。这就是我们做这件事的起点：给 GenZ 的人生模拟器——做选择前，先认识未来的自己。</p>
+        <p>短期，我们希望它能陪你直面恐惧、找到方向；长期，我们希望它能帮你真正了解自己、打破固化的思维方式、跳出让你反复崩盘的循环，找到那个独一无二的你，并持续迭代下去。</p>
+        <p class="pull-quote">"Life isn't about finding yourself, it's about creating yourself."</p>
+      </div>
+      <div class="info-section" id="anchor-where-going">
+        <h2>Where We're Going</h2>
+        <p>我们不想做一个"有问必答"的工具，而是想做一个真正陪你一起想清楚的对话者——这决定了我们接下来最重要的两个打磨方向。</p>
+        <p><strong>第一，对话的顺序不能颠倒。</strong> 情绪起伏的时候，表达往往没有逻辑，想到什么说什么——所以我们的 Agent 永远先做倾听者和思路整理者，给你一个不带评判的情绪出口；等情绪被接住之后，才会切换成新视角的提供者，陪你一起审视哪些想法合理、哪些可能存在偏见，追问"什么对你才是真正重要的""你从哪来，要到哪去"。这个先后顺序，我们不会为了效率而跳过。</p>
+        <p><strong>第二，记录本身就是价值。</strong> 我们发现，用户想要的不只是"被解决"，还想亲眼看到自己变化的证据、看到反复出现的规律——因为规律，才是帮人跳出 loop 的钥匙。这也是为什么，除了对话，我们正在打造第二个核心模块：一个类似 Obsidian 神经元图的可视化界面。每一次对话，都会在这里沉淀成节点和连接，让原本抽象的"我好像一直在纠结同一件事"，变成一张看得见的地图。</p>
+        <p>这两条线——先接住情绪再给视角的对话方式，和把变化沉淀成看得见的图谱——就是我们接下来要持续打磨的方向。</p>
+        <p class="pull-quote">"我们想做的，不是给你一个答案，而是陪你把答案，活成你自己的。"</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vision -->
+  <div class="view" id="view-vision">
+    <div class="info-scroll">
+      <div class="info-hero">
+        <h1>做选择前，先预见未来的自己。</h1>
+        <p>xxxxx</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录 -->
+  <div class="view" id="view-login">
+    <div class="login-shell">
+      <a class="login-back" data-view="home"><i class="ph ph-arrow-left"></i> 返回首页</a>
+      <div class="login-logo">ME.xyz</div>
+      <h1 class="login-title">Welcome back</h1>
+
+      <button class="oauth-btn" id="oauthGoogle" type="button">
+        <span class="oauth-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.79 2.73v2.27h2.9c1.7-1.56 2.69-3.87 2.69-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.17l-2.9-2.27c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.34C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.27-1.7V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l2.99-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l2.99 2.34C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        </span>
+        Sign in with Google
+      </button>
+      <button class="oauth-btn" id="oauthApple" type="button">
+        <span class="oauth-icon"><i class="ph-fill ph-apple-logo"></i></span>
+        Sign in with Apple
+      </button>
+      <button class="oauth-btn" id="oauthPhone" type="button">
+        <span class="oauth-icon"><i class="ph ph-device-mobile"></i></span>
+        Sign in with Phone
+      </button>
+
+      <div class="login-divider">or</div>
+
+      <form id="loginForm">
+        <div id="loginModeEmail">
+          <div class="field-group">
+            <div class="field-label-row"><span class="field-label">Email</span></div>
+            <div class="field-input-wrap">
+              <input class="field-input" type="email" id="loginEmail" autocomplete="email">
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label-row">
+              <span class="field-label">Password <span class="field-hint">at least 6 characters</span></span>
+              <a class="field-link" href="#">Forgot your password?</a>
+            </div>
+            <div class="field-input-wrap">
+              <input class="field-input" type="password" id="loginPassword" autocomplete="current-password">
+              <i class="ph ph-eye field-eye" id="pwToggle"></i>
+            </div>
+          </div>
+        </div>
+
+        <div id="loginModePhone" style="display:none;">
+          <div class="field-group">
+            <div class="field-label-row"><span class="field-label">手机号</span></div>
+            <div class="field-input-wrap">
+              <input class="field-input" type="tel" id="loginPhone" placeholder="+86 手机号" autocomplete="tel">
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label-row"><span class="field-label">验证码</span></div>
+            <div class="field-input-wrap">
+              <input class="field-input" type="text" id="loginCode" placeholder="6 位验证码" maxlength="6" inputmode="numeric">
+              <button class="field-code-btn" id="sendCodeBtn" type="button">发送验证码</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="loginSubmit" type="submit">Sign in</button>
+      </form>
+
+      <div class="login-footer">Don't have an account? <a href="#" id="signupLink">Sign up</a></div>
+    </div>
+  </div>
+
+  <!-- 前置提问 · 全屏沉浸式（入口①） -->
+  <div class="view" id="view-onboarding">
+    <div class="onb-host" id="onbHostFull"></div>
+  </div>
+</div>
+
+<!-- 前置提问 · 弹窗（入口②） -->
+<div class="modal-overlay" id="onbModalOverlay">
+  <div class="modal-panel">
+    <button class="modal-close" id="onbModalClose"><i class="ph ph-x"></i></button>
+    <div class="onb-host" id="onbHostModal"></div>
+  </div>
+</div>
+
+<!-- 未来的我 · 角色详情弹窗 -->
+<div class="modal-overlay" id="personaModalOverlay">
+  <div class="modal-panel persona-modal-panel">
+    <button class="modal-close" id="personaModalClose"><i class="ph ph-x"></i></button>
+    <div class="persona-modal-accent" id="personaModalAccent"></div>
+    <span class="eyebrow">未来的我</span>
+    <h3 class="persona-modal-title" id="personaModalTitle"></h3>
+    <p class="persona-modal-mood" id="personaModalMood"></p>
+    <dl class="persona-modal-summary">
+      <dt>关键选择路径</dt><dd id="personaModalPath"></dd>
+      <dt>日常状态切片</dt><dd id="personaModalDay"></dd>
+      <dt>代价与获得</dt><dd id="personaModalCost"></dd>
+    </dl>
+    <p class="persona-modal-question">进入与该「未来的自己」的独立聊天？</p>
+    <div class="persona-modal-actions">
+      <button class="btn-outline" id="personaModalCancel" type="button">再想想</button>
+      <button class="btn-primary" id="personaModalConfirm" type="button">进入对话</button>
+    </div>
+  </div>
+</div>
+
+<!-- 前置提问 · 共享内容（在两种容器间移动） -->
+<div id="onbContent" style="display:none;">
+  <!-- Step 1：基础信息收集 -->
+  <div class="onb-panel active" id="onbStep1">
+    <h2 class="onb-title">先认识一下你</h2>
+    <p class="onb-sub">帮助我们更好地称呼你、理解你所处的阶段。</p>
+
+    <div class="onb-field">
+      <label class="onb-label">昵称</label>
+      <input class="field-input" id="onbNickname" maxlength="12" placeholder="我们该怎么称呼你？">
+    </div>
+
+    <div class="onb-field">
+      <label class="onb-label">生日</label>
+      <div class="wheel-picker" id="wheelPicker">
+        <div class="wheel-col" id="wheelYear"></div>
+        <div class="wheel-col" id="wheelMonth"></div>
+        <div class="wheel-col" id="wheelDay"></div>
+        <div class="wheel-highlight"></div>
+      </div>
+    </div>
+
+    <div class="onb-field">
+      <label class="onb-label">对话中，我们更适合叫你？</label>
+      <div class="pill-choice-row" id="genderRow">
+        <button type="button" class="pill-choice" data-gender="he">他</button>
+        <button type="button" class="pill-choice" data-gender="she">她</button>
+      </div>
+    </div>
+
+    <button class="btn-submit onb-next-btn" id="onbStep1Next">下一步</button>
+  </div>
+
+  <!-- Step 2：五道情景问题 -->
+  <div class="onb-panel" id="onbStep2">
+    <div class="onb-progress"><div class="onb-progress-fill" id="onbProgressFill"></div></div>
+    <div class="onb-progress-label" id="onbProgressLabel">1 / 5</div>
+
+    <div class="onb-q active" data-q="0" data-dim="稳定 vs 探索倾向">
+      <div class="onb-q-eyebrow">Q1</div>
+      <div class="onb-q-title">岸边的风</div>
+      <div class="onb-q-text">你面前有一条更稳的路，和一条真正想试、却还看不清的路。</div>
+      <button type="button" class="onb-option" data-value="A"><span class="emoji">⚓</span>先靠岸：先把生活安顿好。</button>
+      <button type="button" class="onb-option" data-value="B"><span class="emoji">🌬️</span>去追风：不想太早放下想试的方向。</button>
+      <button type="button" class="onb-option" data-value="U"><span class="emoji">🌫️</span>现在还说不清</button>
+    </div>
+
+    <div class="onb-q" data-q="1" data-dim="自主 vs 关系依从">
+      <div class="onb-q-eyebrow">Q2</div>
+      <div class="onb-q-title">两盏灯</div>
+      <div class="onb-q-text">你想做的事，和亲近的人期待的不太一样。</div>
+      <button type="button" class="onb-option" data-value="A"><span class="emoji">🏮</span>听见身边的灯：先做让他们放心的选择。</button>
+      <button type="button" class="onb-option" data-value="B"><span class="emoji">🔥</span>跟随心里的灯：想先试试自己真正想要的。</button>
+      <button type="button" class="onb-option" data-value="U"><span class="emoji">🌫️</span>现在还说不清</button>
+    </div>
+
+    <div class="onb-q" data-q="2" data-dim="身份焦虑类型">
+      <div class="onb-q-eyebrow">Q3</div>
+      <div class="onb-q-title">借来的地图</div>
+      <div class="onb-q-text">想到三年后的自己，哪一种更让你不安？</div>
+      <button type="button" class="onb-option" data-value="A"><span class="emoji">🗺️</span>走错了路：生活看似不错，却不像自己。</button>
+      <button type="button" class="onb-option" data-value="B"><span class="emoji">🧭</span>还没有地图：想走自己的路，却还没有答案。</button>
+      <button type="button" class="onb-option" data-value="U"><span class="emoji">🌫️</span>现在还说不清</button>
+    </div>
+
+    <div class="onb-q" data-q="3" data-dim="风险偏好">
+      <div class="onb-q-eyebrow">Q4</div>
+      <div class="onb-q-title">起风的时候</div>
+      <div class="onb-q-text">一个机会来了，它可能打乱计划，也可能带你去更远的地方。</div>
+      <button type="button" class="onb-option" data-value="A"><span class="emoji">👣</span>先看脚下：先想清楚会失去什么。</button>
+      <button type="button" class="onb-option" data-value="B"><span class="emoji">🌅</span>望向远方：先看看可能得到什么。</button>
+      <button type="button" class="onb-option" data-value="U"><span class="emoji">🌫️</span>现在还说不清</button>
+    </div>
+
+    <div class="onb-q" data-q="4" data-dim="价值取向">
+      <div class="onb-q-eyebrow">Q5</div>
+      <div class="onb-q-title">掌声之后</div>
+      <div class="onb-q-text">以后回头看现在，你更希望留下什么？</div>
+      <button type="button" class="onb-option" data-value="A"><span class="emoji">👏</span>被世界看见：做成许多值得骄傲的事。</button>
+      <button type="button" class="onb-option" data-value="B"><span class="emoji">🌊</span>听见自己的回声：没有把真正想要的生活弄丢。</button>
+      <button type="button" class="onb-option" data-value="U"><span class="emoji">🌫️</span>现在还说不清</button>
+    </div>
+
+    <div class="onb-q-nav">
+      <a class="onb-prev" id="onbPrevQ">← 上一题</a>
+      <button class="btn-submit onb-next-btn" id="onbNextQ">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 完成过渡 -->
+  <div class="onb-panel onb-outro" id="onbOutro">
+    <p class="onb-outro-text">好，我们开始吧。</p>
+  </div>
+</div>
+
+<script>
+  // ---------- Nav / tab switching ----------
+  const navLinks = document.querySelectorAll('.nav-link:not(.cta)');
+  const views = document.querySelectorAll('.view');
+  function goto(name, anchorId){
+    navLinks.forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+    views.forEach(v=>v.classList.toggle('active', v.id==='view-'+name));
+    if(anchorId){
+      requestAnimationFrame(()=>{
+        const target = document.getElementById(anchorId);
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    }
+    if(name === 'personas' && typeof loadPersonasGallery === 'function'){
+      loadPersonasGallery();
+    }
+  }
+  document.querySelectorAll('[data-view]').forEach(el=>{
+    el.addEventListener('click', ()=>goto(el.dataset.view, el.dataset.anchor));
+  });
+  document.querySelectorAll('[data-goto]').forEach(el=>{
+    el.addEventListener('click', ()=>goto(el.dataset.goto));
+  });
+
+  // ---------- PainPoints 情景故事 Tab ----------
+  const storyTabs = document.getElementById('storyTabs');
+  if(storyTabs){
+    storyTabs.querySelectorAll('.story-tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = btn.dataset.story;
+        storyTabs.querySelectorAll('.story-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.story === idx));
+        document.querySelectorAll('.story-card').forEach(c=>c.classList.toggle('active', c.dataset.story === idx));
+      });
+    });
+  }
+
+  // ---------- 首页功能模块轮播 ----------
+  const featureTrackWrap = document.getElementById('featureTrackWrap');
+  const featureTrack = document.getElementById('featureTrack');
+  const carouselPrev = document.getElementById('carouselPrev');
+  const carouselNext = document.getElementById('carouselNext');
+
+  function featureStep(){
+    const card = featureTrack.querySelector('.feature-card');
+    const gap = parseFloat(getComputedStyle(featureTrack).gap) || 0;
+    return card ? card.getBoundingClientRect().width + gap : 300;
+  }
+  function updateCarouselArrows(){
+    const max = featureTrackWrap.scrollWidth - featureTrackWrap.clientWidth - 1;
+    carouselPrev.disabled = featureTrackWrap.scrollLeft <= 0;
+    carouselNext.disabled = featureTrackWrap.scrollLeft >= max;
+  }
+  carouselPrev.addEventListener('click', ()=>{
+    featureTrackWrap.scrollBy({left:-featureStep(), behavior:'smooth'});
+  });
+  carouselNext.addEventListener('click', ()=>{
+    featureTrackWrap.scrollBy({left:featureStep(), behavior:'smooth'});
+  });
+  featureTrackWrap.addEventListener('scroll', updateCarouselArrows);
+  window.addEventListener('resize', updateCarouselArrows);
+  updateCarouselArrows();
+
+  // ---------- 登录 ----------
+  const loginModeEmail = document.getElementById('loginModeEmail');
+  const loginModePhone = document.getElementById('loginModePhone');
+  const oauthPhoneBtn = document.getElementById('oauthPhone');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginPhone = document.getElementById('loginPhone');
+  const loginCode = document.getElementById('loginCode');
+  const loginSubmit = document.getElementById('loginSubmit');
+  const loginForm = document.getElementById('loginForm');
+  const pwToggle = document.getElementById('pwToggle');
+  const sendCodeBtn = document.getElementById('sendCodeBtn');
+  let loginMode = 'email';
+
+  function updateSubmitState(){
+    const ready = loginMode === 'email'
+      ? loginEmail.value.trim().length >= 3 && loginPassword.value.trim().length >= 6
+      : loginPhone.value.trim() && loginCode.value.trim().length === 6;
+    loginSubmit.classList.toggle('ready', !!ready);
+  }
+
+  oauthPhoneBtn.addEventListener('click', ()=>{
+    loginMode = 'phone';
+    loginModeEmail.style.display = 'none';
+    loginModePhone.style.display = 'block';
+    updateSubmitState();
+  });
+
+  [loginEmail, loginPassword, loginPhone, loginCode].forEach(input=>{
+    input.addEventListener('input', updateSubmitState);
+  });
+
+  pwToggle.addEventListener('click', ()=>{
+    const showing = loginPassword.type === 'text';
+    loginPassword.type = showing ? 'password' : 'text';
+    pwToggle.classList.toggle('ph-eye', showing);
+    pwToggle.classList.toggle('ph-eye-slash', !showing);
+  });
+
+  let codeCountdown = 0;
+  sendCodeBtn.addEventListener('click', ()=>{
+    if(codeCountdown > 0 || !loginPhone.value.trim()) return;
+    codeCountdown = 60;
+    sendCodeBtn.disabled = true;
+    const timer = setInterval(()=>{
+      codeCountdown -= 1;
+      sendCodeBtn.textContent = `${codeCountdown}s 后重新发送`;
+      if(codeCountdown <= 0){
+        clearInterval(timer);
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.textContent = '发送验证码';
+      }
+    }, 1000);
+    sendCodeBtn.textContent = `${codeCountdown}s 后重新发送`;
+  });
+
+  async function completeAuth(data){
+    persistAuth(data);
+    if(getOnboarded()){
+      goto('chat');
+      bootChatIfNeeded();
+    } else {
+      openOnboarding('full');
+    }
+  }
+
+  async function registerWithForm(){
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value.trim();
+    if(email.length < 3 || password.length < 6){
+      alert('请先填写 Email 与 Password（密码至少 6 位），再点 Sign up');
+      return;
+    }
+    const data = await authRequest('/api/auth/register', {email, password});
+    await completeAuth(data);
+  }
+
+  loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!loginSubmit.classList.contains('ready')) return;
+    if(loginMode !== 'email'){
+      alert('手机登录暂未接入，请使用邮箱注册/登录');
+      return;
+    }
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value.trim();
+    loginSubmit.disabled = true;
+    try{
+      const data = await authRequest('/api/auth/login', {email, password});
+      await completeAuth(data);
+    }catch(err){
+      const msg = err.message || String(err);
+      if(/invalid email or password/i.test(msg)){
+        const goSignup = confirm(
+          '登录失败：邮箱不存在或密码不正确。\n\n' +
+          '若是第一次使用，请先注册。\n' +
+          '点「确定」用当前邮箱和密码直接注册。'
+        );
+        if(goSignup){
+          try{
+            await registerWithForm();
+          }catch(regErr){
+            alert('注册失败：' + (regErr.message || String(regErr)));
+          }
+        }
+      } else {
+        alert('登录失败：' + msg);
+      }
+    }finally{
+      loginSubmit.disabled = false;
+    }
+  });
+
+  document.getElementById('signupLink').addEventListener('click', async (e)=>{
+    e.preventDefault();
+    try{
+      await registerWithForm();
+    }catch(err){
+      alert('注册失败：' + (err.message || String(err)));
+    }
+  });
+
+  // ---------- 前置提问：登录态 / 完成态 ----------
+  function getToken(){ return localStorage.getItem('mexyz_token') || ''; }
+  function getLoggedIn(){ return !!getToken(); }
+  function setLoggedIn(v){
+    if(!v){
+      localStorage.removeItem('mexyz_token');
+      localStorage.removeItem('mexyz_user');
+    }
+  }
+  function persistAuth(data){
+    localStorage.setItem('mexyz_token', data.token);
+    localStorage.setItem('mexyz_user', JSON.stringify(data.user || {}));
+  }
+  function formatApiDetail(detail, fallback){
+    if(typeof detail === 'string') return detail;
+    if(Array.isArray(detail)){
+      return detail.map(d=>{
+        const loc = Array.isArray(d.loc) ? d.loc.filter(x=>x!=='body').join('.') : '';
+        const msg = d.msg || '';
+        if(loc && /password/i.test(loc)) return '密码至少 6 位';
+        if(loc && /email/i.test(loc)) return '请填写有效邮箱';
+        return loc ? `${loc}: ${msg}` : msg;
+      }).filter(Boolean).join('；') || fallback;
+    }
+    return fallback;
+  }
+  async function authRequest(path, body){
+    const res = await fetch((window.ME_API || 'http://127.0.0.1:8000') + path, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      throw new Error(formatApiDetail(data.detail, res.statusText || '请求失败'));
+    }
+    return data;
+  }
+  function getOnboarded(){ return localStorage.getItem('mexyz_onboarded') === '1'; }
+  function setOnboarded(v){ localStorage.setItem('mexyz_onboarded', v ? '1' : '0'); }
+
+  // ---------- 前置提问：Get Started 入口② ----------
+  document.getElementById('getStartedBtn').addEventListener('click', ()=>{
+    if(!getLoggedIn()){
+      goto('login');
+    } else if(!getOnboarded()){
+      openOnboarding('modal');
+    } else {
+      goto('chat');
+    }
+  });
+
+  // ---------- 前置提问：Step 1 生日滚轮选择器 ----------
+  const WHEEL_ITEM_HEIGHT = 40;
+  const currentYear = new Date().getFullYear();
+  const birthday = {year: currentYear, month: 1, day: 1};
+
+  function buildWheel(col, values, onPick){
+    col.innerHTML = '';
+    const padTop = document.createElement('div');
+    padTop.className = 'wheel-pad';
+    col.appendChild(padTop);
+    values.forEach(v=>{
+      const item = document.createElement('div');
+      item.className = 'wheel-item';
+      item.textContent = v.label;
+      item.dataset.value = v.value;
+      col.appendChild(item);
+    });
+    const padBottom = document.createElement('div');
+    padBottom.className = 'wheel-pad';
+    col.appendChild(padBottom);
+
+    let raf = null;
+    function syncSelection(){
+      if(col.clientHeight === 0) return;
+      const items = col.querySelectorAll('.wheel-item');
+      const colRect = col.getBoundingClientRect();
+      const centerY = colRect.top + colRect.height / 2;
+      let picked = values[0] ? values[0].value : null;
+      items.forEach(it=>{
+        const r = it.getBoundingClientRect();
+        const dist = Math.abs((r.top + r.height / 2) - centerY);
+        const opacity = Math.max(0.3, 1 - dist / 90);
+        it.style.opacity = opacity;
+        const isSelected = dist < 10;
+        it.classList.toggle('selected', isSelected);
+        if(isSelected) picked = it.dataset.value;
+      });
+      onPick(picked);
+    }
+    col.addEventListener('scroll', ()=>{
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(syncSelection);
+    });
+    syncSelection();
+    return syncSelection;
+  }
+
+  function daysInMonth(year, month){
+    return new Date(year, month, 0).getDate();
+  }
+  function scrollWheelTo(col, value){
+    const item = [...col.querySelectorAll('.wheel-item')].find(el=>el.dataset.value === String(value));
+    if(item) col.scrollTop = item.offsetTop - WHEEL_ITEM_HEIGHT * 2;
+  }
+
+  const wheelYearCol = document.getElementById('wheelYear');
+  const wheelMonthCol = document.getElementById('wheelMonth');
+  const wheelDayCol = document.getElementById('wheelDay');
+
+  const yearValues = [];
+  for(let y = currentYear; y >= currentYear - 70; y--) yearValues.push({label:`${y}年`, value:y});
+  const monthValues = [];
+  for(let m = 1; m <= 12; m++) monthValues.push({label:`${m}月`, value:m});
+
+  let syncDayWheel = null;
+  function rebuildDayWheel(preserveDay){
+    const days = daysInMonth(birthday.year, birthday.month);
+    const dayValues = [];
+    for(let d = 1; d <= days; d++) dayValues.push({label:`${d}日`, value:d});
+    const target = Math.min(preserveDay || birthday.day, days);
+    syncDayWheel = buildWheel(wheelDayCol, dayValues, (v)=>{ birthday.day = Number(v); });
+    birthday.day = target;
+    scrollWheelTo(wheelDayCol, target);
+    syncDayWheel();
+  }
+
+  const syncYearWheel = buildWheel(wheelYearCol, yearValues, (v)=>{ birthday.year = Number(v); rebuildDayWheel(birthday.day); });
+  const syncMonthWheel = buildWheel(wheelMonthCol, monthValues, (v)=>{ birthday.month = Number(v); rebuildDayWheel(birthday.day); });
+  rebuildDayWheel(1);
+
+  function positionWheels(){
+    scrollWheelTo(wheelYearCol, birthday.year);
+    scrollWheelTo(wheelMonthCol, birthday.month);
+    scrollWheelTo(wheelDayCol, birthday.day);
+    syncYearWheel();
+    syncMonthWheel();
+    if(syncDayWheel) syncDayWheel();
+  }
+
+  // ---------- 前置提问：Step 1 昵称 / 称呼 ----------
+  const onbNickname = document.getElementById('onbNickname');
+  const genderRow = document.getElementById('genderRow');
+  const onbStep1Next = document.getElementById('onbStep1Next');
+  let selectedGender = null;
+
+  genderRow.querySelectorAll('.pill-choice').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      genderRow.querySelectorAll('.pill-choice').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGender = btn.dataset.gender;
+      validateStep1();
+    });
+  });
+  function validateStep1(){
+    const nickOk = onbNickname.value.trim().length >= 2 && onbNickname.value.trim().length <= 12;
+    onbStep1Next.classList.toggle('ready', !!(nickOk && selectedGender));
+  }
+  onbNickname.addEventListener('input', validateStep1);
+
+  // ---------- 前置提问：Step 2 五道情景题 ----------
+  const onbStep1 = document.getElementById('onbStep1');
+  const onbStep2 = document.getElementById('onbStep2');
+  const onbOutro = document.getElementById('onbOutro');
+  const onbQuestions = [...document.querySelectorAll('.onb-q')];
+  const onbPrevQ = document.getElementById('onbPrevQ');
+  const onbNextQ = document.getElementById('onbNextQ');
+  const onbProgressFill = document.getElementById('onbProgressFill');
+  const onbProgressLabel = document.getElementById('onbProgressLabel');
+  const scenarioAnswers = new Array(onbQuestions.length).fill(null);
+  let currentQ = 0;
+
+  function showQuestion(i){
+    onbQuestions.forEach(q=>q.classList.toggle('active', Number(q.dataset.q) === i));
+    onbProgressFill.style.width = `${((i + 1) / onbQuestions.length) * 100}%`;
+    onbProgressLabel.textContent = `${i + 1} / ${onbQuestions.length}`;
+    onbPrevQ.classList.toggle('show', i > 0);
+    onbNextQ.classList.toggle('ready', !!scenarioAnswers[i]);
+    onbNextQ.textContent = i === onbQuestions.length - 1 ? '提交 →' : '下一题 →';
+  }
+
+  onbQuestions.forEach(q=>{
+    q.querySelectorAll('.onb-option').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        q.querySelectorAll('.onb-option').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+        scenarioAnswers[Number(q.dataset.q)] = opt.dataset.value;
+        onbNextQ.classList.add('ready');
+      });
+    });
+  });
+
+  onbPrevQ.addEventListener('click', ()=>{
+    if(currentQ === 0) return;
+    currentQ -= 1;
+    showQuestion(currentQ);
+  });
+
+  onbNextQ.addEventListener('click', ()=>{
+    if(!onbNextQ.classList.contains('ready')) return;
+    if(currentQ < onbQuestions.length - 1){
+      currentQ += 1;
+      showQuestion(currentQ);
+    } else {
+      finishOnboarding();
+    }
+  });
+
+  onbStep1Next.addEventListener('click', ()=>{
+    if(!onbStep1Next.classList.contains('ready')) return;
+    onbStep1.classList.remove('active');
+    onbStep2.classList.add('active');
+    currentQ = 0;
+    showQuestion(0);
+  });
+
+  function finishOnboarding(){
+    const profile = {
+      nickname: onbNickname.value.trim(),
+      gender: selectedGender,
+      birthday: {...birthday},
+      answers: onbQuestions.map((q, i)=>({dimension: q.dataset.dim, value: scenarioAnswers[i]}))
+    };
+    window.meUserProfile = profile;
+    localStorage.setItem('mexyz_profile', JSON.stringify(profile));
+    setOnboarded(true);
+
+    const profileNameEl = document.querySelector('#view-profile .profile-head h2');
+    if(profileNameEl && profile.nickname) profileNameEl.textContent = profile.nickname;
+
+    onbStep2.classList.remove('active');
+    onbOutro.classList.add('active');
+    setTimeout(()=>{
+      closeOnboarding();
+      goto('chat');
+    }, 1400);
+  }
+
+  // ---------- 前置提问：容器切换（全屏 / 弹窗） ----------
+  const onbContent = document.getElementById('onbContent');
+  const onbHostFull = document.getElementById('onbHostFull');
+  const onbHostModal = document.getElementById('onbHostModal');
+  const onbModalOverlay = document.getElementById('onbModalOverlay');
+  const onbModalClose = document.getElementById('onbModalClose');
+  let onbMode = 'full';
+
+  function resetOnboarding(){
+    currentQ = 0;
+    scenarioAnswers.fill(null);
+    selectedGender = null;
+    onbNickname.value = '';
+    genderRow.querySelectorAll('.pill-choice').forEach(b=>b.classList.remove('selected'));
+    onbQuestions.forEach(q=>q.querySelectorAll('.onb-option').forEach(o=>o.classList.remove('selected')));
+    onbStep1.classList.add('active');
+    onbStep2.classList.remove('active');
+    onbOutro.classList.remove('active');
+    validateStep1();
+    showQuestion(0);
+  }
+
+  function openOnboarding(mode){
+    onbMode = mode;
+    onbContent.style.display = 'block';
+    resetOnboarding();
+    if(mode === 'modal'){
+      onbHostModal.appendChild(onbContent);
+      onbModalOverlay.classList.add('show');
+    } else {
+      onbHostFull.appendChild(onbContent);
+      goto('onboarding');
+    }
+    requestAnimationFrame(()=>requestAnimationFrame(positionWheels));
+  }
+
+  function closeOnboarding(){
+    if(onbMode === 'modal'){
+      onbModalOverlay.classList.remove('show');
+    }
+  }
+
+  onbModalClose.addEventListener('click', ()=>{
+    onbModalOverlay.classList.remove('show');
+    resetOnboarding();
+  });
+
+  onbHostFull.appendChild(onbContent);
+  onbContent.style.display = 'block';
+  validateStep1();
+  showQuestion(0);
+
+  // ---------- API 接线 ----------
+  // Use the integrated server by default, while retaining compatibility with
+  // the optional port-5500 static-server workflow.
+  const API = /^https?:$/.test(window.location.protocol)
+    ? window.location.origin
+    : 'http://127.0.0.1:8010';
+  window.ME_API = API;
+  const roleCardRow = document.getElementById('roleCardRow');
+  const roleHistory = document.getElementById('roleHistory');
+  const mainHistory = document.getElementById('mainHistory');
+  const revealBtn = document.getElementById('revealBtn');
+  const organizeMemoryBtn = document.getElementById('organizeMemoryBtn');
+  const chatBody = document.getElementById('chatBody');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const chatHeaderTitle = document.querySelector('.chat-header-title');
+  const sidebarNewMainBtn = document.getElementById('sidebarNewMainBtn');
+  const personasGrid = document.getElementById('personasGrid');
+  const personasEmpty = document.getElementById('personasEmpty');
+
+  function showToast(message, type = 'info', duration = 3500){
+    const stack = document.getElementById('toastStack');
+    if(!stack){ alert(message); return; }
+    const el = document.createElement('div');
+    el.className = 'toast' + (type === 'success' ? ' toast-success' : type === 'error' ? ' toast-error' : '');
+    el.textContent = message;
+    stack.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    setTimeout(()=>{
+      el.classList.remove('show');
+      setTimeout(()=>el.remove(), 250);
+    }, duration);
+  }
+
+  let chatBusy = false;
+  let chatBooted = false;
+  /** @type {{kind:'main'|'role', id:string}} */
+  let activeChat = {kind:'main', id:'main_1'};
+  let knownPersonas = {};
+  /** session_id -> {title, ready_for_personas} */
+  let mainMeta = {};
+  /** persona ids that already have a role session */
+  let openedRoleIds = new Set();
+  /** main session_id -> last generated personas for that session (UI only) */
+  let cardsByMain = {};
+
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `@keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}`;
+  document.head.appendChild(styleTag);
+
+  async function api(path, options = {}){
+    const headers = {'Content-Type': 'application/json', ...(options.headers || {})};
+    const token = getToken();
+    if(token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(API + path, {
+      ...options,
+      headers,
+    });
+    const data = await res.json().catch(()=>({}));
+    if(res.status === 401){
+      showToast('登录已过期，请重新登录', 'error', 4000);
+      setLoggedIn(false);
+      goto('login');
+      throw new Error('登录已过期，请重新登录');
+    }
+    if(!res.ok){
+      const detail = data.detail;
+      const msg = typeof detail === 'string' ? detail : (res.statusText || '请求失败');
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  function currentSessionId(){
+    if(activeChat.kind === 'main') return activeChat.id;
+    return 'role-' + activeChat.id;
+  }
+
+  function appendBubble(role, text){
+    const row = document.createElement('div');
+    row.className = 'chat-row ' + (role === 'user' ? 'user' : 'agent');
+    row.innerHTML = `<div class="bubble"></div>`;
+    row.querySelector('.bubble').textContent = text;
+    chatBody.insertBefore(row, roleCardRow);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function clearChatMessages(){
+    [...chatBody.querySelectorAll('.chat-row, .reveal-line')].forEach(el=>el.remove());
+    roleCardRow.innerHTML = '';
+  }
+
+  function setChatHeader(title, tag){
+    chatHeaderTitle.innerHTML = `<i class="ph ph-chat-circle-dots"></i> ${title}`;
+    const tagEl = document.querySelector('.chat-header-tag');
+    if(tagEl && tag) tagEl.textContent = tag;
+  }
+
+  function updateRevealBtn(meta){
+    if(!revealBtn) return;
+    const phaseLabel = {contain:'倾诉', clarify:'校准', explore:'探索', summarize:'收束'};
+    if(meta && meta.ready_for_personas){
+      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 三道门已满足 · 生成"未来的自己"';
+    } else if(meta && meta.turn_count){
+      const label = phaseLabel[meta.phase] || meta.phase || '对话';
+      revealBtn.innerHTML = `<i class="ph ph-sparkle"></i> 第${meta.turn_count}轮·${label} · 生成"未来的自己"`;
+    } else {
+      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 生成"未来的自己"';
+    }
+  }
+
+  function showRevealBtn(show, meta){
+    if(!revealBtn) return;
+    if(show){
+      revealBtn.style.display = '';
+      if(!revealBtn.parentElement) chatBody.appendChild(revealBtn);
+      revealBtn.disabled = false;
+      if(meta) updateRevealBtn(meta);
+    } else {
+      revealBtn.style.display = 'none';
+    }
+  }
+
+  function renderMainHistory(mains, selectId){
+    mainHistory.innerHTML = '';
+    (mains || []).forEach(m=>{
+      mainMeta[m.session_id] = m;
+      const item = document.createElement('div');
+      item.className = 'main-history-item' + (m.session_id === selectId ? ' selected' : '');
+      item.dataset.sessionId = m.session_id;
+      item.innerHTML = `<i class="ph ph-chat-circle"></i>${m.title || m.session_id}`;
+      item.addEventListener('click', ()=>switchToMainChat(m.session_id));
+      mainHistory.appendChild(item);
+    });
+  }
+
+  function renderRoleHistory(roles){
+    openedRoleIds = new Set((roles || []).map(r=>r.persona_id));
+    roleHistory.innerHTML = '';
+    if(!roles || !roles.length){
+      roleHistory.innerHTML = '<div class="role-history-empty">点选角色卡片后，才会在这里出现独立会话。</div>';
+      return;
+    }
+    roles.forEach(r=>{
+      knownPersonas[r.persona_id] = knownPersonas[r.persona_id] || {
+        id: r.persona_id, title: r.title, accent: r.accent, mood:'', path:'', day:'', cost:''
+      };
+      const item = document.createElement('div');
+      item.className = 'role-history-item' + (activeChat.kind==='role' && activeChat.id===r.persona_id ? ' selected' : '');
+      item.dataset.personaId = r.persona_id;
+      item.style.borderLeftColor = `var(--card-${r.accent || 'slate'})`;
+      item.innerHTML = `<span class="rh-main"><i class="ph ph-circle-wavy" style="color:var(--accent-${r.accent || 'slate'})"></i>${r.title}</span>`;
+      const ttBtn = document.createElement('button');
+      ttBtn.className = 'rh-report-btn';
+      ttBtn.type = 'button';
+      ttBtn.title = '查看思维溯源';
+      ttBtn.innerHTML = '<i class="ph ph-scroll"></i>';
+      ttBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        _gotoInner('thoughttrace');
+        openThoughtTrace(r.persona_id);
+      });
+      item.appendChild(ttBtn);
+      item.addEventListener('click', ()=>openPersonaChat(knownPersonas[r.persona_id]));
+      roleHistory.appendChild(item);
+    });
+  }
+
+  async function refreshSessionsSidebar(selectMainId){
+    const data = await api('/api/sessions');
+    const mains = data.mains || [];
+    const sid = selectMainId || (activeChat.kind==='main' ? activeChat.id : null) || (mains[0] && mains[0].session_id);
+    renderMainHistory(mains, sid);
+    renderRoleHistory(data.roles || []);
+    return data;
+  }
+
+  function renderPersonaCards(personas){
+    roleCardRow.innerHTML = '';
+    if(!personas || !personas.length) return;
+    const line = document.createElement('div');
+    line.className = 'reveal-line';
+    line.textContent = '我已经看到了未来不同版本的你——';
+    chatBody.insertBefore(line, roleCardRow);
+
+    personas.forEach((r, i)=>{
+      knownPersonas[r.id] = r;
+      const card = document.createElement('div');
+      card.className = 'role-card';
+      card.innerHTML = `
+        <div class="role-card-accent" style="background:var(--card-${r.accent})"></div>
+        <div class="role-card-body">
+          <div class="role-card-title">${r.title}</div>
+          <div class="role-card-mood">${r.mood || ''}</div>
+        </div>`;
+      card.style.opacity = '0';
+      card.style.animation = `fadeUp .5s ease ${i*0.12}s forwards`;
+      card.addEventListener('click', ()=>confirmOpenPersona(r));
+      roleCardRow.appendChild(card);
+    });
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function makePersonaCardEl(r, i){
+    knownPersonas[r.id] = r;
+    const card = document.createElement('div');
+    card.className = 'role-card';
+    card.innerHTML = `
+      <div class="role-card-accent" style="background:var(--card-${r.accent})"></div>
+      <div class="role-card-body">
+        <div class="role-card-title">${r.title}</div>
+        <div class="role-card-mood">${r.mood || ''}</div>
+        <div class="role-card-foot"><i class="ph ph-scroll"></i>查看思维溯源</div>
+      </div>`;
+    card.style.opacity = '0';
+    card.style.animation = `fadeUp .5s ease ${(i||0)*0.08}s forwards`;
+    card.addEventListener('click', ()=>confirmOpenPersona(r));
+    const footLink = card.querySelector('.role-card-foot');
+    footLink.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      _gotoInner('thoughttrace');
+      openThoughtTrace(r.id);
+    });
+    return card;
+  }
+
+  async function loadPersonasGallery(){
+    try{
+      const data = await api('/api/personas');
+      const list = data.personas || [];
+      personasGrid.innerHTML = '';
+      list.forEach((p, i)=> personasGrid.appendChild(makePersonaCardEl(p, i)));
+      personasEmpty.style.display = list.length ? 'none' : 'block';
+    }catch(_){
+      personasEmpty.style.display = 'block';
+      personasEmpty.textContent = '无法加载角色列表，请确认后端已启动。';
+    }
+  }
+
+  const personaModalOverlay = document.getElementById('personaModalOverlay');
+  let personaModalTarget = null;
+  function confirmOpenPersona(r){
+    personaModalTarget = r;
+    document.getElementById('personaModalAccent').style.background = `var(--card-${r.accent})`;
+    document.getElementById('personaModalTitle').textContent = r.title;
+    document.getElementById('personaModalMood').textContent = r.mood || '';
+    document.getElementById('personaModalPath').textContent = r.path || '——';
+    document.getElementById('personaModalDay').textContent = r.day || '——';
+    document.getElementById('personaModalCost').textContent = r.cost || '——';
+    personaModalOverlay.classList.add('show');
+  }
+  function closePersonaModal(){ personaModalOverlay.classList.remove('show'); personaModalTarget = null; }
+  document.getElementById('personaModalClose').addEventListener('click', closePersonaModal);
+  document.getElementById('personaModalCancel').addEventListener('click', closePersonaModal);
+  document.getElementById('personaModalConfirm').addEventListener('click', ()=>{
+    const target = personaModalTarget;
+    closePersonaModal();
+    if(target) openPersonaChat(target);
+  });
+  personaModalOverlay.addEventListener('click', (e)=>{ if(e.target === personaModalOverlay) closePersonaModal(); });
+
+  async function openPersonaChat(r){
+    knownPersonas[r.id] = r;
+    try{
+      await api('/api/sessions/role', {
+        method: 'POST',
+        body: JSON.stringify({persona_id: r.id}),
+      });
+    }catch(err){
+      alert('无法打开角色会话：' + (err.message || String(err)));
+      return;
+    }
+    goto('chat');
+    activeChat = {kind:'role', id: r.id};
+    setChatHeader(r.title, '与未来的自己对话');
+    document.querySelectorAll('.main-history-item').forEach(el=>el.classList.remove('selected'));
+    clearChatMessages();
+    showRevealBtn(false);
+    try{
+      const detail = await api(`/api/sessions/role-${r.id}`);
+      (detail.messages || []).forEach(m=>{
+        appendBubble(m.role === 'user' ? 'user' : 'agent', m.content);
+      });
+      if(!(detail.messages || []).length){
+        appendBubble('agent', `你好，我是「${r.title}」。想从哪聊起？`);
+      }
+    }catch(_){
+      appendBubble('agent', `你好，我是「${r.title}」。想从哪聊起？`);
+    }
+    await refreshSessionsSidebar();
+  }
+
+  async function sendMainMessage(text){
+    appendBubble('user', text);
+    const data = await api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({message: text, session_id: activeChat.id}),
+    });
+    appendBubble('agent', data.reply);
+    updateRevealBtn(data);
+    return data;
+  }
+
+  async function sendRoleMessage(personaId, text){
+    appendBubble('user', text);
+    const data = await api('/api/role-chat', {
+      method: 'POST',
+      body: JSON.stringify({persona_id: personaId, message: text}),
+    });
+    appendBubble('agent', data.reply);
+    return data;
+  }
+
+  async function handleSend(){
+    const text = chatInput.value.trim();
+    if(!text || chatBusy) return;
+    chatBusy = true;
+    sendBtn.disabled = true;
+    chatInput.value = '';
+    try{
+      if(activeChat.kind === 'main') await sendMainMessage(text);
+      else await sendRoleMessage(activeChat.id, text);
+    }catch(err){
+      appendBubble('agent', '（出错了）' + (err.message || String(err)));
+    }finally{
+      chatBusy = false;
+      sendBtn.disabled = false;
+      chatInput.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  chatInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
+  });
+
+  revealBtn.addEventListener('click', async ()=>{
+    if(chatBusy || activeChat.kind !== 'main') return;
+    chatBusy = true;
+    revealBtn.disabled = true;
+    const prev = revealBtn.innerHTML;
+    revealBtn.innerHTML = '<i class="ph ph-spinner"></i> 生成中…';
+    try{
+      const data = await api('/api/generate-personas', {
+        method: 'POST',
+        body: JSON.stringify({session_id: activeChat.id}),
+      });
+      if(!data.ready){
+        const g = data.gate_state || {};
+        alert(
+          '三道门尚未全部满足，再多聊聊：\n' +
+          `情绪稳住: ${g.emotion_stable ? '✓' : '✗'}\n` +
+          `信息完整: ${g.info_complete ? '✓' : '✗'}\n` +
+          `用户意愿: ${g.user_willing ? '✓' : '✗'}\n\n` +
+          '提示：约 8–10 轮后会引导总结并询问是否想看未来自己。'
+        );
+        revealBtn.innerHTML = prev;
+        revealBtn.disabled = false;
+        return;
+      }
+      cardsByMain[activeChat.id] = data.personas;
+      data.personas.forEach(p=>{ knownPersonas[p.id] = p; });
+      showRevealBtn(false);
+      renderPersonaCards(data.personas);
+      // do NOT add to role history until user picks one
+      loadPersonasGallery();
+    }catch(err){
+      alert('生成失败：' + (err.message || String(err)));
+      revealBtn.innerHTML = prev;
+      revealBtn.disabled = false;
+    }finally{
+      chatBusy = false;
+    }
+  });
+
+  async function switchToMainChat(sessionId){
+    activeChat = {kind:'main', id: sessionId};
+    const title = (mainMeta[sessionId] && mainMeta[sessionId].title) || '主聊天';
+    setChatHeader(title, '先倾听 · 再给新视角');
+    document.querySelectorAll('.role-history-item').forEach(el=>el.classList.remove('selected'));
+    document.querySelectorAll('.main-history-item').forEach(el=>{
+      el.classList.toggle('selected', el.dataset.sessionId === sessionId);
+    });
+    clearChatMessages();
+    showRevealBtn(true);
+    try{
+      const detail = await api(`/api/sessions/${sessionId}`);
+      const msgs = detail.messages || [];
+      if(msgs.length){
+        msgs.forEach(m=>appendBubble(m.role === 'user' ? 'user' : 'agent', m.content));
+      } else {
+        appendBubble('agent', '嗨，我想听听你最近在纠结什么。不用急着找答案，先说说就好。');
+      }
+      const cards = cardsByMain[sessionId];
+      if(cards && cards.length){
+        showRevealBtn(false);
+        renderPersonaCards(cards);
+      } else {
+        updateRevealBtn({
+          ready_for_personas: detail.ready_for_personas,
+          turn_count: detail.turn_count,
+          phase: detail.phase,
+        });
+      }
+    }catch(_){
+      appendBubble('agent', '嗨，我想听听你最近在纠结什么。（后端未连接时仅本地提示）');
+    }
+  }
+
+  // ---------- 思维溯源 ----------
+  const ttPicker = document.getElementById('ttPicker');
+  const ttEmpty = document.getElementById('ttEmpty');
+  const ttReport = document.getElementById('ttReport');
+  const ttReportTag = document.getElementById('ttReportTag');
+  const ttReportTitle = document.getElementById('ttReportTitle');
+  const ttReportBody = document.getElementById('ttReportBody');
+  let ttCurrentPersonaId = null;
+
+  async function renderThoughtTracePicker(){
+    ttReport.style.display = 'none';
+    ttPicker.style.display = 'flex';
+    let list = Object.values(knownPersonas);
+    try{
+      const data = await api('/api/personas');
+      list = data.personas || list;
+    }catch(_){ /* 后端未连接时，用已知角色兜底 */ }
+    ttPicker.innerHTML = '';
+    if(!list.length){
+      ttEmpty.style.display = 'block';
+      return;
+    }
+    ttEmpty.style.display = 'none';
+    list.forEach(r=>{
+      knownPersonas[r.id] = r;
+      const eligible = openedRoleIds.has(r.id);
+      const card = document.createElement('div');
+      card.className = 'role-card' + (eligible ? '' : ' tt-locked');
+      card.innerHTML = `
+        <div class="role-card-accent" style="background:var(--card-${r.accent})"></div>
+        <div class="role-card-body">
+          <div class="role-card-title">${r.title}</div>
+          <div class="role-card-mood">${eligible ? '思维溯源已可查看' : '再聊几轮，攒够故事后解锁'}</div>
+        </div>`;
+      if(eligible) card.addEventListener('click', ()=>openThoughtTrace(r.id));
+      ttPicker.appendChild(card);
+    });
+  }
+
+  function openThoughtTrace(personaId){
+    const r = knownPersonas[personaId];
+    if(!r || !openedRoleIds.has(personaId)){
+      renderThoughtTracePicker();
+      return;
+    }
+    ttCurrentPersonaId = personaId;
+    ttPicker.style.display = 'none';
+    ttEmpty.style.display = 'none';
+    ttReport.style.display = 'block';
+    ttReportTag.innerHTML = `<span class="dot" style="background:var(--accent-${r.accent})"></span>${r.title} · 思维溯源`;
+    ttReportTitle.textContent = `这段时间，你和「${r.title}」一起走过的循环`;
+    ttReportBody.innerHTML = `
+      <div class="tt-chapter">
+        <div class="tt-chapter-eyebrow">反复出现的念头</div>
+        <h3>"${r.mood || '还没想清楚的那种纠结'}"</h3>
+        <p>关键选择路径：${r.path || '——'}。日常状态切片：${r.day || '——'}。这类念头在你们的对话里，反复出现。</p>
+      </div>
+      <div class="tt-chapter">
+        <div class="tt-chapter-eyebrow">代价与获得</div>
+        <p>${r.cost || '每一次选择都有取舍，你已经开始看清它们。'}</p>
+      </div>
+      <div class="tt-chapter">
+        <div class="tt-chapter-eyebrow">打破循环的入口</div>
+        <p>下一次卡在同样的念头时，试着先问自己：这一次，「${r.title}」会怎么选？</p>
+      </div>`;
+  }
+
+  document.getElementById('ttBackToPicker').addEventListener('click', renderThoughtTracePicker);
+  document.getElementById('ttBackToChat').addEventListener('click', ()=>{
+    if(ttCurrentPersonaId && knownPersonas[ttCurrentPersonaId]) openPersonaChat(knownPersonas[ttCurrentPersonaId]);
+  });
+  document.getElementById('sidebarThoughtTraceBtn').addEventListener('click', ()=>{
+    goto('thoughttrace');
+  });
+  document.getElementById('sidebarMemoryGraphBtn').addEventListener('click', ()=>{
+    window.location.assign('/memory-map/');
+  });
+
+  sidebarNewMainBtn.addEventListener('click', async ()=>{
+    try{
+      const created = await api('/api/sessions/main', {method:'POST', body:'{}'});
+      await refreshSessionsSidebar(created.session_id);
+      await switchToMainChat(created.session_id);
+    }catch(err){
+      alert('新建失败：' + (err.message || String(err)));
+    }
+  });
+
+  organizeMemoryBtn.addEventListener('click', async ()=>{
+    if(chatBusy){ showToast('正在处理上一个操作，请稍候…', 'info', 2000); return; }
+    chatBusy = true;
+    organizeMemoryBtn.disabled = true;
+    const prev = organizeMemoryBtn.innerHTML;
+    organizeMemoryBtn.innerHTML = '<i class="ph ph-spinner"></i> 整理中…';
+    try{
+      const data = await api('/api/memory/organize', {
+        method: 'POST',
+        body: JSON.stringify({session_id: currentSessionId()}),
+      });
+      const nC = (data.created || []).length;
+      const nM = (data.merged || []).length;
+      if(nC + nM > 0){
+        showToast(`✓ 整理完成：新增 ${nC}，合并 ${nM}，已同步到脑图`, 'success', 4000);
+      }else{
+        showToast('整理完成，本次没有新的事件', 'info', 3500);
+      }
+    }catch(err){
+      showToast('整理失败：' + (err.message || String(err)), 'error', 5000);
+    }finally{
+      organizeMemoryBtn.innerHTML = prev;
+      organizeMemoryBtn.disabled = false;
+      chatBusy = false;
+    }
+  });
+
+  async function bootChatIfNeeded(){
+    if(!getLoggedIn()) return;
+    if(chatBooted){
+      await refreshSessionsSidebar();
+      return;
+    }
+    chatBooted = true;
+    clearChatMessages();
+    try{
+      const data = await refreshSessionsSidebar();
+      const first = (data.mains && data.mains[0] && data.mains[0].session_id) || 'main_1';
+      await switchToMainChat(first);
+      await loadPersonasGallery();
+    }catch(err){
+      appendBubble('agent', '无法加载会话：' + (err.message || String(err)));
+    }
+  }
+
+  // 初始化：需登录
+  clearChatMessages();
+  if(getLoggedIn()){
+    bootChatIfNeeded();
+  } else {
+    // stay; user opens login via CTA
+  }
+
+  // Route protected product areas.
+  const _gotoInner = goto;
+  goto = function(name, anchorId){
+    if(name === 'profile' && !getLoggedIn()){
+      _gotoInner('login', anchorId);
+      return;
+    }
+    _gotoInner(name, anchorId);
+    if(name === 'chat') bootChatIfNeeded();
+    if(name === 'personas') loadPersonasGallery();
+    if(name === 'thoughttrace') renderThoughtTracePicker();
+  };
+
+  // 支持外部页面（如记忆图谱）通过 ?goto=xxx 跳回指定视图
+  (function bootFromQuery(){
+    const params = new URLSearchParams(window.location.search);
+    const target = params.get('goto');
+    if(target){
+      goto(target);
+      params.delete('goto');
+      const rest = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : ''));
+    }
+  })();
+
+  document.getElementById('graphGetStartedBtn').addEventListener('click', ()=>{
+    window.location.assign('/memory-map/');
+  });
+</script>
+</body>
+</html>

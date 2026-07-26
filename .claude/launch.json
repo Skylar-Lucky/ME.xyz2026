@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "me-xyz-app",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd ME_xyz2/MExyz-feature/backend && exec ../.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port ${PORT}"],
+      "autoPort": true
+    },
+    {
+      "name": "memory-graph-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "ME_xyz2/braingraph/memory-graph-demo/frontend",
+      "port": 5173
+    }
+  ]
+}

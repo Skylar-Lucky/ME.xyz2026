@@ -1,0 +1,221 @@
+:global(*){box-sizing:border-box}:global(body){margin:0;background:#080713;color:#eee;font-family:Inter,"PingFang SC",system-ui,sans-serif}.page{--line:#28233f;min-height:100vh;background:radial-gradient(circle at 42% 45%,#191337 0,#0b0918 44%,#06060d 100%);display:flex;flex-direction:column;color:#f4f1ff}.toolbar{min-height:72px;display:flex;align-items:center;gap:9px;padding:12px 18px;border-bottom:1px solid var(--line);background:rgba(10,8,23,.88);backdrop-filter:blur(14px);z-index:2}.brand{display:flex;align-items:center;gap:10px;margin-right:10px;white-space:nowrap}.brand div{display:flex;flex-direction:column}.brand small{font-size:8px;letter-spacing:2px;color:#8f88aa}.logo{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#7456e8;box-shadow:0 0 25px #7556e888}.toolbar input,.toolbar select,.toolbar button{height:37px;border-radius:9px;border:1px solid #302a48;background:#151128;color:#ddd;padding:0 10px}.toolbar button{cursor:pointer}.search{min-width:190px;flex:1}.primary{border:none!important;background:linear-gradient(135deg,#7658eb,#4f91e6)!important;color:#fff!important}.toggle{font-size:12px;color:#aaa;display:flex;align-items:center;white-space:nowrap}.toggle input{height:auto}.workspace{display:flex;flex:1;min-height:0}.canvas{position:relative;flex:1;height:calc(100vh - 116px);overflow:hidden}.panel{position:relative;width:0;overflow:hidden;border-left:1px solid transparent;background:rgba(12,10,27,.92);transition:width .25s,padding .25s}.panelOpen{width:320px;padding:32px 24px;border-color:var(--line)}.close{position:absolute;right:14px;top:12px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer}.panel h2{font-size:20px;line-height:1.45}.panel dl{display:grid;grid-template-columns:70px 1fr;gap:12px;font-size:13px}.panel dt{color:#8f88aa}.panel dd{margin:0;line-height:1.6}.panelHint{color:#827b9b;margin-top:45%}.eyebrow{font-size:10px;letter-spacing:2px;color:#9c83ff}.pill{display:inline-block;padding:2px 7px;margin:0 4px 4px 0;border:1px solid #574878;border-radius:99px;color:#dbcfff}.legend{height:44px;display:flex;gap:24px;align-items:center;justify-content:center;border-top:1px solid var(--line);font-size:11px;color:#8d87a4;background:#090815}.state{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:16px;color:#b9b2d2}.state button{padding:8px 16px;border-radius:8px;border:1px solid #6652a3;background:#1d1738;color:white}.stats{position:absolute;left:18px;bottom:16px;padding:8px 12px;border:1px solid #32294c;border-radius:9px;background:#0d0b1dcc;color:#9790af;font-size:12px}.stats b{color:#a88dff}
+@media(max-width:1000px){.toolbar{overflow-x:auto}.toolbar input[type=date]{display:none}.workspace{position:relative}.panelOpen{position:absolute;right:0;inset-block:0;z-index:3;width:min(360px,82vw)}}
+@media(max-width:640px){.toolbar{min-height:124px;flex-wrap:wrap}.brand{width:100%}.search{min-width:160px}.canvas{height:calc(100vh - 168px)}.panelOpen{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;height:min(55vh,460px);border-left:0;border-top:1px solid var(--line);border-radius:20px 20px 0 0}.legend{overflow-x:auto;justify-content:flex-start;padding-inline:16px}.toolbar button:nth-of-type(1),.toolbar button:nth-of-type(3){display:none}}
+.panelOpen{width:370px;padding:26px 24px;border-color:var(--line);box-shadow:-18px 0 55px #0007}.panelOpen:before{content:"节点文档";display:block;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #393052;color:#9189aa;font-size:10px;letter-spacing:2px}
+@media(max-width:1000px){.panelOpen{width:min(390px,86vw)}}
+@media(max-width:640px){.panelOpen{width:100%;padding:25px 22px}}
+.analyticsDock{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:12px;height:176px;padding:10px 14px;border-top:1px solid var(--line);background:rgba(8,7,19,.96)}.trendCard,.timelineCard{min-width:0;padding:10px 14px;border:1px solid #302949;border-radius:12px;background:linear-gradient(145deg,rgba(27,22,48,.92),rgba(14,12,29,.96));overflow:hidden}.analyticsTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}.analyticsTitle b{font-size:12px}.analyticsTitle span{font-size:9px;color:#8e87a7}.trendCard svg{display:block;width:100%;height:124px;overflow:visible}.chartGrid{stroke:#38304f;stroke-width:.6}.chartLabel{fill:#817a98;font-size:8px}.chartLine{fill:none;stroke:#9e80ff;stroke-width:2.2;filter:drop-shadow(0 0 4px #7b59e9)}.chartPoint{fill:#d7caff;stroke:#7456e8;stroke-width:1}.chartCursor{stroke:#5ee6c1;stroke-width:1;stroke-dasharray:3 3}.timelineCard{display:flex;flex-direction:column;justify-content:center;padding-inline:24px}.timelineDate{text-align:center;margin:4px 0 18px;font-size:20px;color:#eee}.timelineRange{width:100%;height:6px;accent-color:#8061ef;cursor:ew-resize}.timelineLabels{display:flex;justify-content:space-between;margin-top:12px;color:#817a98;font-size:9px}.timelineLabels span:nth-child(2){color:#aaa3c2}.canvas{height:calc(100vh - 292px)}
+@media(max-width:850px){.analyticsDock{grid-template-columns:1fr;height:auto}.trendCard{display:none}.timelineCard{min-height:116px}.canvas{height:calc(100vh - 300px)}}
+@media(max-width:640px){.analyticsDock{padding:8px;height:126px}.timelineDate{font-size:15px;margin-bottom:10px}.timelineLabels span:nth-child(2){display:none}.canvas{height:calc(100vh - 338px)}}
+/* Light product theme */
+:global(body){background:#fff;color:#000}.page{--line:#dedede;background:#fff;color:#000}.toolbar{min-height:64px;padding-block:9px;border-color:#dedede;background:rgba(255,255,255,.96);color:#000;box-shadow:0 2px 12px #0000000a}.logo{color:#000;background:#FFECBD;box-shadow:none;border:1px solid #000}.brand small,.analyticsTitle span,.timelineLabels,.panel dt,.panelHint{color:#666}.toolbar input,.toolbar select,.toolbar button{border-color:#cfcfcf;background:#fff;color:#000}.toolbar button:hover{background:#f7f1ff}.primary{background:#F0D4FF!important;color:#000!important;border:1px solid #000!important}.canvas{height:calc(100vh - 228px);background:#fff}.panel{display:flex;flex-direction:column;flex:0 0 340px;width:340px;overflow:hidden;padding:0;border-left:1px solid #dedede;background:#fff;color:#000;box-shadow:-8px 0 24px #0000000a}.identitySection{flex:0 0 44%;padding:22px 20px 16px;border-bottom:1px solid #dedede;background:#faf7fc}.identitySection h2{margin:7px 0 14px;font-size:18px}.identityList{display:grid;gap:7px}.identityList button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid #dfc6eb;border-radius:10px;background:#F0D4FF;color:#000;text-align:left;cursor:pointer}.identityList button:hover,.identityList .identityActive{border-color:#000;box-shadow:0 2px 8px #00000014}.identityAvatar{display:grid;place-items:center;width:27px;height:27px;border:1px solid #000;border-radius:50%;background:#fff;font-size:12px}.detailSlot{position:relative;flex:1;min-height:0;padding:22px 20px;overflow-y:auto;background:#fff}.detailSlot h2{font-size:18px}.detailSlot dl{display:grid;grid-template-columns:66px 1fr;gap:9px;font-size:12px}.detailSlot dt{color:#666}.detailSlot dd{margin:0;line-height:1.55}.close{color:#000}.eyebrow{color:#6d427f}.pill{border-color:#e5bad2;background:#FFE3F5;color:#000}.panelOpen:before{display:none}.analyticsDock{grid-template-columns:minmax(280px,350px) 1fr;height:120px;padding:7px 12px;border-color:#dedede;background:#fff}.trendCard,.timelineCard{padding:7px 12px;border-color:#d7c1e1;background:#F0D4FF;color:#000}.trendCard svg{height:82px}.analyticsTitle b,.timelineDate{color:#000}.chartGrid{stroke:#cdb7d8}.chartLabel{fill:#5d5362}.chartLine{stroke:#6f4382;filter:none}.chartPoint{fill:#fff;stroke:#000}.chartCursor{stroke:#000}.timelineDate{margin:0 0 8px;font-size:15px}.timelineRange{accent-color:#7f4b94}.timelineLabels{margin-top:7px;color:#5e5263}.legend{height:40px;border-color:#dedede;background:#fff;color:#000}.stats{border-color:#ccc;background:#ffffffeb;color:#444}.stats b{color:#000}
+@media(max-width:1000px){.panel{position:relative;inset:auto;z-index:1;width:300px;flex-basis:300px}.panelOpen{width:300px;padding:0}.identitySection{padding:16px 14px}.detailSlot{padding:17px 14px}}
+@media(max-width:850px){.analyticsDock{height:102px}.timelineCard{min-height:88px}.canvas{height:calc(100vh - 210px)}.panel{flex-basis:270px;width:270px}}
+@media(max-width:640px){.panel{position:fixed;left:0;right:0;bottom:0;top:auto;display:block;width:100%;height:min(62vh,520px);z-index:5;border-left:0;border-top:1px solid #ddd;border-radius:18px 18px 0 0;transform:translateY(calc(100% - 76px));transition:transform .25s}.panel:focus-within,.panel:hover{transform:translateY(0)}.identitySection{max-height:220px}.detailSlot{min-height:210px}.analyticsDock{height:100px}.canvas{height:calc(100vh - 288px)}.legend{height:36px}}
+/* Neon charcoal theme */
+:global(html),:global(body),:global(#root){width:100%;height:100%;overflow:hidden}:global(body){background:#18191d;color:#fff}.page{height:100vh;min-height:0;overflow:hidden;background:#18191d;color:#fff}.toolbar{flex:0 0 64px;min-height:64px;border-color:#ffffff55;background:rgba(24,25,29,.97);color:#fff;box-shadow:0 2px 16px #0008}.logo{color:#fff;background:#FF5FC8;border-color:#fff;box-shadow:0 0 16px #FF5FC888}.brand small,.analyticsTitle span,.timelineLabels,.panel dt,.panelHint{color:#c8c8cc}.toolbar input,.toolbar select,.toolbar button{border-color:#ffffff88;background:#23252a;color:#fff}.toolbar input::placeholder{color:#aaa}.toolbar button:hover{background:#34313a}.primary{background:#C77DFF!important;color:#111!important;border-color:#fff!important;box-shadow:0 0 12px #C77DFF66}.workspace{flex:1;min-height:0;overflow:hidden;background:#18191d}.canvas{height:auto;min-width:0;min-height:0;overflow:hidden;background:#18191d}:global(.memoryGraphViewport){width:100%;height:100%;overflow:hidden}.panel{height:100%;border-color:#ffffff55;background:#18191d;color:#fff;box-shadow:-8px 0 24px #0008}.identitySection{border-color:#ffffff44;background:#1e1f24}.identityList button{border-color:#C77DFF;background:#C77DFF22;color:#fff;box-shadow:0 0 8px #C77DFF22}.identityList button:hover,.identityList .identityActive{border-color:#fff;box-shadow:0 0 14px #C77DFF99}.identityAvatar{border-color:#fff;background:#C77DFF;color:#111}.detailSlot{background:#18191d}.close{color:#fff}.eyebrow{color:#DDA7FF}.pill{border-color:#FFE66D;background:#FFE66D22;color:#fff}.analyticsDock{flex:0 0 108px;height:108px;padding:6px 12px;border-top:1px solid #ffffff66;border-bottom:1px solid #ffffff33;background:transparent}.trendCard,.timelineCard{padding:6px 12px;border:0;border-right:1px solid #ffffff55;border-radius:0;background:transparent;color:#fff}.timelineCard{border-right:0}.trendCard svg{height:72px}.analyticsTitle b,.timelineDate{color:#fff}.chartGrid{stroke:#ffffff2d}.chartLabel{fill:#d4d4d8}.chartLine{stroke:#C77DFF;stroke-width:2.4;filter:drop-shadow(0 0 4px #C77DFF)}.chartPoint{fill:#C77DFF;stroke:#fff}.chartCursor{stroke:#DDA7FF;filter:drop-shadow(0 0 3px #C77DFF)}.timelineRange{accent-color:#C77DFF;filter:drop-shadow(0 0 4px #C77DFF)}.timelineLabels{color:#ccc}.legend{flex:0 0 36px;height:36px;border-color:#ffffff55;background:#18191d;color:#fff}.stats{border-color:#ffffff66;background:#18191ddd;color:#ddd}.stats b{color:#fff}
+@media(max-width:850px){.analyticsDock{flex-basis:94px;height:94px}.timelineCard{min-height:80px}.canvas{height:auto}.panel{height:100%}}
+@media(max-width:640px){.toolbar{flex-basis:118px}.analyticsDock{flex-basis:88px;height:88px}.canvas{height:auto}.panel{height:min(62vh,520px);border-color:#ffffff66;background:#18191d}.legend{flex-basis:34px;height:34px}}
+.dateField{display:flex;flex-direction:column;gap:2px;min-width:126px}.dateField small{padding-left:3px;color:#c8c8cc;font-size:8px;line-height:10px;letter-spacing:.5px}.dateField input{width:100%;height:30px!important}.pageBody{display:grid;grid-template-columns:minmax(0,1fr) 340px;flex:1;min-height:0;overflow:hidden}.mainColumn{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.mainColumn .workspace{flex:1;min-height:0}.mainColumn .analyticsDock{width:100%}.mainColumn .legend{width:100%}.pageBody .panel{width:340px;height:100%;min-height:0;align-self:stretch}.identitySection{flex:0 0 auto;padding:14px 16px 12px}.identitySection h2{margin:5px 0 10px;font-size:15px}.identityList{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.identityList button{gap:6px;min-width:0;padding:6px 7px;font-size:10px}.identityList button>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identityAvatar{flex:0 0 23px;width:23px;height:23px;font-size:10px}.detailSlot{overflow:hidden;padding:16px}.detailSlot h2{margin:6px 0 10px;font-size:16px}.detailSlot p{font-size:12px;line-height:1.55}.detailSlot dl{gap:7px;font-size:11px}.detailSlot dd{line-height:1.4}.analyticsDock{grid-template-columns:minmax(250px,320px) 1fr}
+@media(max-width:1000px){.pageBody{grid-template-columns:minmax(0,1fr) 300px}.pageBody .panel{width:300px}.dateField{display:none}}
+@media(max-width:850px){.pageBody{grid-template-columns:minmax(0,1fr) 270px}.pageBody .panel{width:270px}.identityList button{padding:5px;font-size:9px}.analyticsDock{grid-template-columns:1fr}}
+@media(max-width:640px){.pageBody{display:block}.mainColumn{height:100%}.pageBody .panel{width:100%;height:min(62vh,520px)}}
+.identitySection,.emotionSection{flex:0 0 140px;min-height:140px;max-height:140px;padding:12px 16px;border-bottom:1px solid #ffffff44;background:#1e1f24}.emotionSection{overflow:hidden}.emotionList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:100px;margin-top:8px;padding-right:3px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#C77DFF transparent}.emotionList button{display:flex;align-items:center;gap:7px;min-width:0;padding:6px 8px;border:1px solid #FFE66D;border-radius:9px;background:#FFE66D18;color:#fff;font-size:10px;cursor:pointer}.emotionList button:hover,.emotionList .emotionActive{border-color:#fff;box-shadow:0 0 12px #FFE66D99}.emotionSwatch{flex:0 0 10px;width:10px;height:10px;border-radius:3px;background:#FFE66D;box-shadow:0 0 7px #FFE66D}.emotionList button>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.detailSlot{flex:1;min-height:0}
+@media(max-width:850px){.identitySection,.emotionSection{flex-basis:118px;min-height:118px;max-height:118px;padding:10px 12px}.emotionList{max-height:80px}}
+@media(max-width:640px){.identitySection,.emotionSection{flex-basis:116px;min-height:116px;max-height:116px}}
+.search{flex:0 1 240px;width:240px;min-width:170px}
+@media(max-width:640px){
+  .meBrand{margin-right:2px}
+  .search{flex-basis:190px;width:190px}
+}
+.selectField{display:flex;flex-direction:column;gap:2px;min-width:116px}
+.selectField small{padding-left:3px;color:#c8c8cc;font-size:8px;line-height:10px;letter-spacing:.5px}
+.selectField select{width:100%;height:30px!important}
+.eventNavigation{position:absolute;top:16px;right:16px;z-index:4;display:flex;gap:8px}
+.eventNavigation button{height:34px;padding:0 13px;border:1px solid #ffffff55;border-radius:9px;background:#18191de8;color:#fff;cursor:pointer;box-shadow:0 6px 18px #0007}
+.eventNavigation button:hover:not(:disabled){border-color:#5c7a99;background:#222b33}
+.eventNavigation button:disabled{opacity:.35;cursor:not-allowed}
+.eventTooltip{position:absolute;z-index:8;width:240px;max-width:calc(100% - 24px);padding:11px 13px;border:1px solid #5c7a9988;border-radius:10px;background:#111218ee;color:#fff;pointer-events:none;box-shadow:0 12px 28px #000b,0 0 16px #5c7a9922;backdrop-filter:blur(10px)}
+.eventTooltip time,.eventTooltip span{display:block;color:#b9b9c2;font-size:10px}
+.eventTooltip strong{display:block;margin:5px 0;font-size:12px;line-height:1.45}
+.growthSection{margin-top:18px;padding-top:15px;border-top:1px solid #ffffff2d}
+.growthReport{white-space:pre-wrap;color:#ddd;font-size:12px;line-height:1.75}
+.growthError{color:#ffb4b4!important}
+.detailSlot{overflow-y:auto}
+@media(max-width:1120px){.toolbar{flex-wrap:wrap}.selectField{min-width:108px}.dateField{display:none}}
+
+/* ---------- ME.xyz design-system 统一（保留深色画布，其余对齐主站视觉规范） ---------- */
+@font-face{
+  font-family:'ClashDisplay';
+  src:url('/Fonts/WEB/fonts/ClashDisplay-Medium.ttf') format('truetype');
+  font-weight:500;
+  font-style:normal;
+  font-display:swap;
+}
+:global(body),.page,.toolbar,.panel,.legend,.analyticsDock,.eventNavigation button,.eventTooltip,
+.identityList button,.emotionList button,.state button{
+  font-family:'Tahoma','PingFang SC','Microsoft YaHei',sans-serif;
+}
+
+/* 品牌区：与主站 .logo 同规格（ClashDisplay 22px/500），改为可点击的退出入口，纯文字不带外框 */
+.toolbar.toolbar .meBrand{
+  flex:0 0 auto;
+  margin-right:16px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  height:auto;
+  color:#ffffff;
+  background:none;
+  border:none;
+  box-shadow:none;
+  font-family:'ClashDisplay','Tahoma','PingFang SC',sans-serif;
+  font-weight:500;
+  font-size:22px;
+  letter-spacing:0.3px;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:opacity .15s ease;
+}
+.toolbar.toolbar .meBrand:hover{opacity:.75;background:none}
+.toolbar{padding-left:18px}
+@media(max-width:640px){.toolbar{padding-left:18px}}
+
+/* 小号标签统一到 design-system 的 caption(13px)/body-sm(14px) 阶梯，原先 8-10px 过小 */
+.selectField small,.dateField small,.analyticsTitle span,.timelineLabels,
+.eyebrow,.eventTooltip time,.eventTooltip span{
+  font-size:13px;
+}
+.analyticsTitle b,.timelineDate{font-size:14px}
+
+/* 强调色统一为图谱节点色板：情绪→黄 FFE66E，观点→绿 58F287，角色事件/结构→紫 C77EFF，事件→天蓝 4DCAFF，起点我→粉 FF5FC8 */
+.pill{border-color:#FFE66E88;background:#FFE66E22;color:#fff}
+.eyebrow{color:#FF5FC8}
+/* 底部情绪趋势/时间线统一走粉色（呼应"起点我"节点色），不再用天蓝 */
+.chartLine{stroke:#FF5FC8;stroke-width:2.4;filter:drop-shadow(0 0 4px #FF5FC8)}
+.chartPoint{fill:#FF5FC8;stroke:#fff}
+.chartCursor{stroke:#ffb0e3;filter:drop-shadow(0 0 3px #FF5FC8)}
+.timelineRange{accent-color:#FF5FC8;filter:drop-shadow(0 0 4px #FF5FC8)}
+
+/* 纯黑背景（覆盖此前的深灰 #18191d），与其余页面统一走"保留自身底色 + 站内字体/组件规范"的原则 */
+:global(body),.page,.workspace,.canvas,.panel,.detailSlot,.identitySection,.emotionSection{background:#000000}
+.toolbar{background:rgba(0,0,0,.97)}
+.legend{background:#000000}
+.eventNavigation button{background:#000000e8}
+.stats{background:#000000dd}
+.eventTooltip{border-color:#4DCAFF88;background:#000000ee;box-shadow:0 12px 28px #000b,0 0 16px #4DCAFF22}
+.eventNavigation button:hover:not(:disabled){border-color:#4DCAFF;background:#0a1f2b}
+
+/* 关闭按钮改成图标按钮，尺寸与主站小型图标按钮一致 */
+.eventNavigation button{border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+.close{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:8px;font-size:16px;
+}
+.close:hover{background:#ffffff14}
+.state button{border-radius:8px}
+
+/* ---------- 顶部工具栏：与主站 nav-link / field-input 视觉统一 ---------- */
+.toolbar{gap:10px;padding:12px 20px}
+.toolbar input,.toolbar select{
+  height:38px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  transition:border-color .15s ease,background .15s ease;
+}
+.toolbar input{border-radius:12px}
+.toolbar select{border-radius:999px;padding:0 14px}
+.toolbar input:focus,.toolbar select:focus{
+  outline:none;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.08);
+}
+.toolbar input::placeholder{color:#8a8a90}
+.toolbar button{
+  height:38px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:0 16px;
+  transition:border-color .15s ease,background .15s ease;
+}
+.toolbar button:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28)}
+.toggle{
+  height:38px;padding:0 14px;
+  border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  background:rgba(255,255,255,.05);
+  gap:8px;
+}
+.toggle input{accent-color:#FF5FC8}
+
+/* ---------- 底部情绪趋势/时间线：内嵌悬浮卡片，左侧与统计徽标对齐，时间线列拉宽 ---------- */
+.mainColumn .analyticsDock{
+  width:calc(100% - 36px);max-width:none;margin:14px 18px;
+  height:210px;
+  grid-template-columns:minmax(300px,390px) 1fr;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  background:#0a0a0a;
+  box-shadow:0 16px 40px rgba(0,0,0,.55);
+}
+.trendCard,.timelineCard{background:transparent;padding:16px 18px}
+.trendCard svg{height:150px}
+.canvas{height:calc(100vh - 326px)}
+@media(max-width:850px){.mainColumn .analyticsDock{height:auto;max-height:260px}}
+
+/* ---------- 底部图例：真实还原画布里的节点形状与配色，而不是纯文字符号 ---------- */
+.legend{gap:20px;flex-wrap:wrap}
+.legendItem{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#e6e6e6}
+.legendShape{display:inline-block;flex-shrink:0;border-radius:50%}
+.legendShape[data-shape="diamond"]{border-radius:2px;transform:rotate(45deg)}
+.legendShape[data-shape="square"]{border-radius:3px}
+.legendLine{display:inline-block;width:22px;border-top-width:2px;border-top-style:solid}
+.legendLine[data-style="dashed"]{border-top-style:dashed}
+.legendLine[data-style="dotted"]{border-top-style:dotted;border-top-width:3px}
+
+/* ---------- 右侧详情面板：空态收窄为图标条，选中后再展开 ---------- */
+.panel{transition:width .25s ease}
+.pageBody .panel.panelCollapsed{width:64px}
+.panel.panelCollapsed .detailSlot{padding:0;display:flex;align-items:center;justify-content:center;height:100%}
+.panelHint{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  color:#84848a;font-size:12px;line-height:1.6;text-align:center;padding:0 10px;margin-top:0;
+}
+.panelHint i{font-size:22px;color:#5c5c62}
+@media(max-width:640px){.panel.panelCollapsed{width:100%}}
+
+/* ---------- 图例中的连线项改为可点击的显示/隐藏按钮 ---------- */
+.legendItem{background:none;border:none;padding:2px 4px;border-radius:6px;cursor:default}
+.legendItemButton{cursor:pointer;transition:opacity .15s ease,background .15s ease}
+.legendItemButton:hover{background:rgba(255,255,255,.08)}
+.legendItemButton[data-active="false"]{opacity:.4}
+
+/* ---------- 顶部工具栏分组：搜索 / 筛选卡片 / 视图设置下拉，三组视觉分离 ---------- */
+.toolbarGroup{display:flex;align-items:center;gap:8px}
+.toolbarGroupCard{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;
+  padding:6px 10px;
+}
+.toolbarSpacer{flex:1}
+.viewMenuWrap{position:relative}
+.viewMenuPanel{
+  position:absolute;top:calc(100% + 10px);right:0;
+  display:flex;flex-direction:column;gap:6px;
+  min-width:170px;padding:10px;
+  background:#0a0a0a;border:1px solid rgba(255,255,255,.14);border-radius:12px;
+  box-shadow:0 16px 36px rgba(0,0,0,.55);
+  z-index:20;
+}
+.viewMenuItem{
+  border-radius:8px!important;
+  justify-content:flex-start!important;
+  width:100%;
+}
+.viewMenuToggle{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;font-size:13.5px;color:#fff;cursor:pointer;
+}
+.viewMenuToggle input{accent-color:#FF5FC8}

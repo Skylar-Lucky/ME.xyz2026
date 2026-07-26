@@ -1,0 +1,64 @@
+INFO:     Started server process [37910]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+INFO:     127.0.0.1:61887 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61912 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61912 - "GET /Fonts/WEB/fonts/ClashDisplay-Medium.ttf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61912 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62004 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:62004 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62112 - "GET /api/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62112 - "GET /api/sessions/main_1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62112 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62120 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62120 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62120 - "GET /api/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58814 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58815 - "GET /api/personas HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58841 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58842 - "GET /memory-map/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58843 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59033 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59033 - "GET /Fonts/WEB/fonts/ClashDisplay-Medium.ttf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59033 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59148 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59160 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59186 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59186 - "GET /api/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59186 - "GET /api/sessions/main_1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59186 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59204 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59259 - "GET /memory-map/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59260 - "GET /memory-map/assets/index-C2VhnE95.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59259 - "GET /memory-map/assets/index-Cw7MrliB.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59259 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59259 - "GET /api/memory-graph?limit=300 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59301 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59302 - "GET /api/sessions/main_1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59302 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59302 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59301 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59320 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59320 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59321 - "GET /api/memory-graph?limit=300 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59445 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59463 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59464 - "GET /api/memory-graph?limit=300 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59494 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59494 - "GET /api/sessions/main_1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59494 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59947 - "GET /api/personas HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59948 - "GET /api/personas HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60076 - "GET /api/memory-graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60133 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60160 - "GET /api/personas HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60242 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61460 - "GET /api/memory-graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61530 - "GET /api/memory-graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61531 - "GET /api/memory-graph HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for background tasks to complete. (CTRL+C to force quit)
+INFO:     127.0.0.1:61756 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61778 - "GET /api/memory-graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61780 - "GET /api/memory-graph HTTP/1.1" 200 OK

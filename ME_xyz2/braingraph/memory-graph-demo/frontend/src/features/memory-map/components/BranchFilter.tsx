@@ -1,0 +1,1 @@
+export function BranchFilter({value,onChange}:{value:string;onChange:(v:string)=>void}){return <select aria-label="分支" value={value} onChange={e=>onChange(e.target.value)}><option value="">全部分支</option><option value="main">主线</option><option value="entrepreneur_01">创业者的我</option><option value="researcher_01">研究者的我</option><option value="global_life_01">在海外生活的我</option></select>}

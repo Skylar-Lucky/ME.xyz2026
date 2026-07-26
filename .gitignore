@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_tmp/
+.tmp/
+.server.pid
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Secrets / local config
+.env
+.env.local
+backend/.env
+**/backend/.env
+
+# Data / DB
+*.db
+backend/data/*.db
+**/backend/data/*.db
+
+# OS
+.DS_Store
