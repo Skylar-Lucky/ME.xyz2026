@@ -45,6 +45,9 @@
     --story-sakura:#FFE3F5;
     --story-vanilla:#FFECBD;
 
+    --success:#16a34a;
+    --error:#dc2626;
+
     /* 角色卡片配色：情绪基调复用 story 色板（而非 accent-* 深色），moss/slate/ochre/plum/rose 仅作为语义 key */
     --card-moss:var(--story-mint);
     --card-slate:var(--story-sky);
@@ -320,8 +323,6 @@
   /* ---------- 登录 ---------- */
   #view-login{overflow-y:auto; align-items:center;}
   .login-shell{width:100%; max-width:440px; margin:0 auto; padding:64px 24px 60px;}
-  .login-back{display:inline-flex; align-items:center; gap:6px; font-size:14.5px; color:var(--muted); margin-bottom:var(--space-xl);}
-  .login-back:hover{color:var(--ink);}
   .login-logo{text-align:center; font-family:var(--font-logo); font-weight:500; font-size:22px; margin-bottom:var(--space-xxl); display:flex; align-items:center; justify-content:center; gap:8px;}
   .login-title{text-align:center; font-family:var(--font-display); font-weight:600; font-size:33px; margin-bottom:var(--space-xl); color:var(--ink);}
 
@@ -332,6 +333,9 @@
   }
   .oauth-btn:hover{border-color:var(--ink);}
   .oauth-btn .oauth-icon{position:absolute; left:18px; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:20px;}
+  .oauth-btn:disabled{color:var(--muted-soft); cursor:default;}
+  .oauth-btn:disabled:hover{border-color:var(--hairline-strong);}
+  .oauth-badge{font-size:12px; font-weight:500; color:var(--muted-soft); background:var(--surface-strong); padding:3px 9px; border-radius:var(--radius-pill); margin-left:2px;}
 
   .login-divider{display:flex; align-items:center; gap:12px; margin:var(--space-lg) 0; color:var(--muted-soft); font-size:13px;}
   .login-divider::before,.login-divider::after{content:''; flex:1; height:1px; background:var(--hairline);}
@@ -357,6 +361,9 @@
   .field-code-btn:hover{background:var(--hairline-strong);}
   .field-code-btn:disabled{color:var(--muted-soft); cursor:default;}
   .field-code-btn:disabled:hover{background:var(--surface-strong);}
+  .field-note{font-size:13px; color:var(--muted); margin-top:6px; line-height:1.5;}
+  .field-error{font-size:13px; color:var(--error); margin-top:6px; display:none;}
+  .field-error.show{display:block;}
 
   .btn-submit{width:100%; padding:14px; border-radius:var(--radius-pill); background:var(--muted-soft); color:#fff; font-size:16px; font-weight:600; margin-top:var(--space-sm); transition:background .18s ease;}
   .btn-submit.ready{background:var(--ink); cursor:pointer;}
@@ -398,8 +405,40 @@
 
   /* ---------- 前置提问 · 通用 ---------- */
   #view-onboarding{overflow-y:auto;}
-  .onb-host{width:100%; max-width:460px; margin:0 auto; padding:64px 24px 80px;}
+  .onb-host{width:100%; max-width:460px; margin:0 auto;}
   .modal-panel .onb-host{padding:0; max-width:none;}
+
+  /* ---------- 前置提问 · 全屏页面布局（入口①） ---------- */
+  .onb-page{flex:1; overflow-y:auto;}
+  .onb-page-inner{
+    max-width:1280px; margin:0 auto; width:100%; min-height:100%;
+    display:flex; align-items:center; gap:var(--space-xxl);
+    padding:var(--space-xxl) var(--space-xl) 80px;
+  }
+  .onb-rail{flex:1 1 340px; max-width:380px;}
+  .onb-rail-title{font-family:var(--font-display); font-weight:300; font-size:31px; line-height:1.35; color:var(--ink); margin:var(--space-sm) 0 var(--space-sm);}
+  .onb-rail-sub{font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:var(--space-xl); max-width:320px;}
+  .onb-rail-steps{display:flex; flex-direction:column; gap:var(--space-base); border-top:1px solid var(--hairline); padding-top:var(--space-lg);}
+  .onb-rail-step{display:flex; align-items:center; gap:12px; font-size:14.5px; color:var(--muted-soft); transition:color .2s ease;}
+  .onb-rail-dot{width:8px; height:8px; border-radius:50%; border:1.5px solid var(--hairline-strong); flex-shrink:0; transition:all .2s ease;}
+  .onb-rail-step.current{color:var(--ink); font-weight:500;}
+  .onb-rail-step.current .onb-rail-dot{background:var(--ink); border-color:var(--ink);}
+  .onb-rail-step.done{color:var(--body);}
+  .onb-rail-step.done .onb-rail-dot{background:var(--muted-soft); border-color:var(--muted-soft);}
+
+  .onb-card{
+    flex:1 1 480px; max-width:520px; width:100%;
+    background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xxl);
+    padding:var(--space-xxl); box-shadow:0 4px 24px rgba(0,0,0,.04);
+  }
+  .onb-card .onb-host{max-width:none;}
+
+  @media (max-width:900px){
+    .onb-page-inner{flex-direction:column; align-items:stretch; padding-top:var(--space-xl);}
+    .onb-rail{max-width:none;}
+    .onb-rail-steps{flex-direction:row; flex-wrap:wrap; gap:var(--space-sm) var(--space-lg); border-top:none; padding-top:0;}
+    .onb-card{max-width:none;}
+  }
 
   .onb-panel{display:none;}
   .onb-panel.active{display:block; animation:onbFade .35s ease;}
@@ -436,7 +475,7 @@
   .onb-next-btn{margin-top:var(--space-sm);}
 
   /* Step2 情景题 · 故事感 */
-  #onbStep2{background:#f8f5f1; margin:0 -24px; padding:24px; border-radius:var(--radius-xxl);}
+  #onbStep2{background:#f8f5f1; margin:0 calc(var(--space-xxl) * -1); padding:var(--space-xl) var(--space-xxl); border-radius:var(--radius-xxl);}
   .modal-panel #onbStep2{margin:0; background:transparent; padding:0;}
   .onb-progress{height:3px; background:var(--hairline); border-radius:2px; margin-bottom:10px; overflow:hidden;}
   .onb-progress-fill{height:100%; background:var(--ink); border-radius:2px; transition:width .3s ease;}
@@ -463,7 +502,7 @@
   .onb-prev:hover{color:var(--ink);}
   .onb-q-nav .onb-next-btn{width:auto; padding:11px 22px; margin-top:0;}
 
-  .onb-outro{text-align:center; padding-top:120px;}
+  .onb-outro{text-align:center; padding:60px 0;}
   .onb-outro-text{font-family:var(--font-display); font-weight:300; font-size:26.5px; color:var(--ink-soft);}
 
   /* ---------- 对话 ---------- */
@@ -1124,60 +1163,41 @@
   <!-- 登录 -->
   <div class="view" id="view-login">
     <div class="login-shell">
-      <a class="login-back" data-view="home"><i class="ph ph-arrow-left"></i> 返回首页</a>
       <div class="login-logo">ME.xyz</div>
       <h1 class="login-title">Welcome back</h1>
 
-      <button class="oauth-btn" id="oauthGoogle" type="button">
+      <button class="oauth-btn" id="oauthGoogle" type="button" data-provider="google">
         <span class="oauth-icon">
           <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.79 2.73v2.27h2.9c1.7-1.56 2.69-3.87 2.69-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.17l-2.9-2.27c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.34C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.27-1.7V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l2.99-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l2.99 2.34C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
         </span>
         Sign in with Google
       </button>
-      <button class="oauth-btn" id="oauthApple" type="button">
+      <button class="oauth-btn" id="oauthApple" type="button" disabled>
         <span class="oauth-icon"><i class="ph-fill ph-apple-logo"></i></span>
-        Sign in with Apple
+        Sign in with Apple <span class="oauth-badge">即将推出</span>
       </button>
-      <button class="oauth-btn" id="oauthPhone" type="button">
+      <button class="oauth-btn" id="oauthPhone" type="button" disabled>
         <span class="oauth-icon"><i class="ph ph-device-mobile"></i></span>
-        Sign in with Phone
+        Sign in with Phone <span class="oauth-badge">即将推出</span>
       </button>
 
       <div class="login-divider">or</div>
 
       <form id="loginForm">
-        <div id="loginModeEmail">
-          <div class="field-group">
-            <div class="field-label-row"><span class="field-label">Email</span></div>
-            <div class="field-input-wrap">
-              <input class="field-input" type="email" id="loginEmail" autocomplete="email">
-            </div>
-          </div>
-          <div class="field-group">
-            <div class="field-label-row">
-              <span class="field-label">Password <span class="field-hint">at least 6 characters</span></span>
-              <a class="field-link" href="#">Forgot your password?</a>
-            </div>
-            <div class="field-input-wrap">
-              <input class="field-input" type="password" id="loginPassword" autocomplete="current-password">
-              <i class="ph ph-eye field-eye" id="pwToggle"></i>
-            </div>
+        <div class="field-group">
+          <div class="field-label-row"><span class="field-label">Email</span></div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="email" id="loginEmail" autocomplete="email">
           </div>
         </div>
-
-        <div id="loginModePhone" style="display:none;">
-          <div class="field-group">
-            <div class="field-label-row"><span class="field-label">手机号</span></div>
-            <div class="field-input-wrap">
-              <input class="field-input" type="tel" id="loginPhone" placeholder="+86 手机号" autocomplete="tel">
-            </div>
+        <div class="field-group">
+          <div class="field-label-row">
+            <span class="field-label">Password <span class="field-hint">at least 6 characters</span></span>
+            <a class="field-link" href="#">Forgot your password?</a>
           </div>
-          <div class="field-group">
-            <div class="field-label-row"><span class="field-label">验证码</span></div>
-            <div class="field-input-wrap">
-              <input class="field-input" type="text" id="loginCode" placeholder="6 位验证码" maxlength="6" inputmode="numeric">
-              <button class="field-code-btn" id="sendCodeBtn" type="button">发送验证码</button>
-            </div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" id="loginPassword" autocomplete="current-password">
+            <i class="ph ph-eye field-eye" id="pwToggle"></i>
           </div>
         </div>
 
@@ -1188,9 +1208,88 @@
     </div>
   </div>
 
+  <!-- 注册（独立页面：邮箱 + 密码 + 邮箱验证码） -->
+  <div class="view" id="view-signup">
+    <div class="login-shell">
+      <div class="login-logo">ME.xyz</div>
+      <h1 class="login-title">Create your account</h1>
+
+      <button class="oauth-btn" id="signupOauthGoogle" type="button" data-provider="google">
+        <span class="oauth-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.79 2.73v2.27h2.9c1.7-1.56 2.69-3.87 2.69-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.17l-2.9-2.27c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.34C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.27-1.7V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l2.99-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l2.99 2.34C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        </span>
+        Sign up with Google
+      </button>
+      <button class="oauth-btn" type="button" disabled>
+        <span class="oauth-icon"><i class="ph-fill ph-apple-logo"></i></span>
+        Sign up with Apple <span class="oauth-badge">即将推出</span>
+      </button>
+      <button class="oauth-btn" type="button" disabled>
+        <span class="oauth-icon"><i class="ph ph-device-mobile"></i></span>
+        Sign up with Phone <span class="oauth-badge">即将推出</span>
+      </button>
+
+      <div class="login-divider">or</div>
+
+      <form id="signupForm">
+        <div class="field-group">
+          <div class="field-label-row"><span class="field-label">Email</span></div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="email" id="signupEmail" autocomplete="email">
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label-row"><span class="field-label">Password <span class="field-hint">at least 6 characters</span></span></div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" id="signupPassword" autocomplete="new-password">
+            <i class="ph ph-eye field-eye" id="signupPwToggle"></i>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label-row"><span class="field-label">Confirm password</span></div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" id="signupPasswordConfirm" autocomplete="new-password">
+            <i class="ph ph-eye field-eye" id="signupPwConfirmToggle"></i>
+          </div>
+          <p class="field-error" id="signupPwMismatch">两次输入的密码不一致</p>
+        </div>
+        <div class="field-group">
+          <div class="field-label-row"><span class="field-label">邮箱验证码</span></div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="text" id="signupCode" placeholder="6 位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+            <button class="field-code-btn" id="signupSendCodeBtn" type="button" disabled>获取验证码</button>
+          </div>
+          <p class="field-note">填写邮箱后点击获取验证码，我们会把 6 位数字发送到该邮箱</p>
+        </div>
+
+        <button class="btn-submit" id="signupSubmit" type="submit">创建账号</button>
+      </form>
+
+      <div class="login-footer">Already have an account? <a href="#" id="loginLink">Sign in</a></div>
+    </div>
+  </div>
+
   <!-- 前置提问 · 全屏沉浸式（入口①） -->
   <div class="view" id="view-onboarding">
-    <div class="onb-host" id="onbHostFull"></div>
+    <div class="onb-page">
+      <div class="onb-page-inner">
+        <div class="onb-rail">
+          <span class="eyebrow">ME.xyz · Onboarding</span>
+          <h2 class="onb-rail-title">先认识一下<br>未来的你</h2>
+          <p class="onb-rail-sub">五个小问题，帮我们校准接下来要遇见的「未来的自己」——没有标准答案，凭直觉选就好。</p>
+          <div class="onb-rail-steps" id="onbRailSteps">
+            <div class="onb-rail-step" data-rq="0"><span class="onb-rail-dot"></span><span>岸边的风 · 稳定 vs 探索</span></div>
+            <div class="onb-rail-step" data-rq="1"><span class="onb-rail-dot"></span><span>两盏灯 · 自主 vs 关系依从</span></div>
+            <div class="onb-rail-step" data-rq="2"><span class="onb-rail-dot"></span><span>借来的地图 · 身份焦虑</span></div>
+            <div class="onb-rail-step" data-rq="3"><span class="onb-rail-dot"></span><span>起风的时候 · 风险偏好</span></div>
+            <div class="onb-rail-step" data-rq="4"><span class="onb-rail-dot"></span><span>掌声之后 · 价值取向</span></div>
+          </div>
+        </div>
+        <div class="onb-card">
+          <div class="onb-host" id="onbHostFull"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1381,59 +1480,23 @@
   updateCarouselArrows();
 
   // ---------- 登录 ----------
-  const loginModeEmail = document.getElementById('loginModeEmail');
-  const loginModePhone = document.getElementById('loginModePhone');
-  const oauthPhoneBtn = document.getElementById('oauthPhone');
   const loginEmail = document.getElementById('loginEmail');
   const loginPassword = document.getElementById('loginPassword');
-  const loginPhone = document.getElementById('loginPhone');
-  const loginCode = document.getElementById('loginCode');
   const loginSubmit = document.getElementById('loginSubmit');
   const loginForm = document.getElementById('loginForm');
   const pwToggle = document.getElementById('pwToggle');
-  const sendCodeBtn = document.getElementById('sendCodeBtn');
-  let loginMode = 'email';
 
-  function updateSubmitState(){
-    const ready = loginMode === 'email'
-      ? loginEmail.value.trim().length >= 3 && loginPassword.value.trim().length >= 6
-      : loginPhone.value.trim() && loginCode.value.trim().length === 6;
-    loginSubmit.classList.toggle('ready', !!ready);
+  function updateLoginSubmitState(){
+    const ready = loginEmail.value.trim().length >= 3 && loginPassword.value.trim().length >= 6;
+    loginSubmit.classList.toggle('ready', ready);
   }
-
-  oauthPhoneBtn.addEventListener('click', ()=>{
-    loginMode = 'phone';
-    loginModeEmail.style.display = 'none';
-    loginModePhone.style.display = 'block';
-    updateSubmitState();
-  });
-
-  [loginEmail, loginPassword, loginPhone, loginCode].forEach(input=>{
-    input.addEventListener('input', updateSubmitState);
-  });
+  [loginEmail, loginPassword].forEach(input=>input.addEventListener('input', updateLoginSubmitState));
 
   pwToggle.addEventListener('click', ()=>{
     const showing = loginPassword.type === 'text';
     loginPassword.type = showing ? 'password' : 'text';
     pwToggle.classList.toggle('ph-eye', showing);
     pwToggle.classList.toggle('ph-eye-slash', !showing);
-  });
-
-  let codeCountdown = 0;
-  sendCodeBtn.addEventListener('click', ()=>{
-    if(codeCountdown > 0 || !loginPhone.value.trim()) return;
-    codeCountdown = 60;
-    sendCodeBtn.disabled = true;
-    const timer = setInterval(()=>{
-      codeCountdown -= 1;
-      sendCodeBtn.textContent = `${codeCountdown}s 后重新发送`;
-      if(codeCountdown <= 0){
-        clearInterval(timer);
-        sendCodeBtn.disabled = false;
-        sendCodeBtn.textContent = '发送验证码';
-      }
-    }, 1000);
-    sendCodeBtn.textContent = `${codeCountdown}s 后重新发送`;
   });
 
   async function completeAuth(data){
@@ -1446,24 +1509,9 @@
     }
   }
 
-  async function registerWithForm(){
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value.trim();
-    if(email.length < 3 || password.length < 6){
-      alert('请先填写 Email 与 Password（密码至少 6 位），再点 Sign up');
-      return;
-    }
-    const data = await authRequest('/api/auth/register', {email, password});
-    await completeAuth(data);
-  }
-
   loginForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!loginSubmit.classList.contains('ready')) return;
-    if(loginMode !== 'email'){
-      alert('手机登录暂未接入，请使用邮箱注册/登录');
-      return;
-    }
     const email = loginEmail.value.trim();
     const password = loginPassword.value.trim();
     loginSubmit.disabled = true;
@@ -1473,18 +1521,7 @@
     }catch(err){
       const msg = err.message || String(err);
       if(/invalid email or password/i.test(msg)){
-        const goSignup = confirm(
-          '登录失败：邮箱不存在或密码不正确。\n\n' +
-          '若是第一次使用，请先注册。\n' +
-          '点「确定」用当前邮箱和密码直接注册。'
-        );
-        if(goSignup){
-          try{
-            await registerWithForm();
-          }catch(regErr){
-            alert('注册失败：' + (regErr.message || String(regErr)));
-          }
-        }
+        alert('登录失败：邮箱不存在或密码不正确。\n\n如果是第一次使用，请点击下方「Sign up」完成注册。');
       } else {
         alert('登录失败：' + msg);
       }
@@ -1493,12 +1530,105 @@
     }
   });
 
-  document.getElementById('signupLink').addEventListener('click', async (e)=>{
+  document.getElementById('signupLink').addEventListener('click', (e)=>{
     e.preventDefault();
+    if(loginEmail.value.trim()) signupEmail.value = loginEmail.value.trim();
+    goto('signup');
+    updateSignupState();
+  });
+
+  document.getElementById('loginLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    goto('login');
+  });
+
+  document.querySelectorAll('.oauth-btn[data-provider="google"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      showToast('Google 一键登录正在接入中，敬请期待，请先用邮箱注册', 'info', 4000);
+    });
+  });
+
+  // ---------- 注册（独立页面：邮箱 + 密码 + 邮箱验证码） ----------
+  const signupEmail = document.getElementById('signupEmail');
+  const signupPassword = document.getElementById('signupPassword');
+  const signupPasswordConfirm = document.getElementById('signupPasswordConfirm');
+  const signupPwMismatch = document.getElementById('signupPwMismatch');
+  const signupCode = document.getElementById('signupCode');
+  const signupSendCodeBtn = document.getElementById('signupSendCodeBtn');
+  const signupSubmit = document.getElementById('signupSubmit');
+  const signupForm = document.getElementById('signupForm');
+  const signupPwToggle = document.getElementById('signupPwToggle');
+  const signupPwConfirmToggle = document.getElementById('signupPwConfirmToggle');
+  let signupCodeCountdown = 0;
+
+  function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  function updateSignupState(){
+    const emailOk = isValidEmail(signupEmail.value.trim());
+    const pwOk = signupPassword.value.length >= 6;
+    const confirmFilled = signupPasswordConfirm.value.length > 0;
+    const pwMatch = signupPassword.value === signupPasswordConfirm.value;
+    signupPwMismatch.classList.toggle('show', confirmFilled && !pwMatch);
+    signupSendCodeBtn.disabled = !emailOk || signupCodeCountdown > 0;
+    const codeOk = signupCode.value.trim().length === 6;
+    signupSubmit.classList.toggle('ready', emailOk && pwOk && confirmFilled && pwMatch && codeOk);
+  }
+  [signupEmail, signupPassword, signupPasswordConfirm, signupCode].forEach(input=>{
+    input.addEventListener('input', updateSignupState);
+  });
+
+  function bindPwToggle(toggleEl, inputEl){
+    toggleEl.addEventListener('click', ()=>{
+      const showing = inputEl.type === 'text';
+      inputEl.type = showing ? 'password' : 'text';
+      toggleEl.classList.toggle('ph-eye', showing);
+      toggleEl.classList.toggle('ph-eye-slash', !showing);
+    });
+  }
+  bindPwToggle(signupPwToggle, signupPassword);
+  bindPwToggle(signupPwConfirmToggle, signupPasswordConfirm);
+
+  signupSendCodeBtn.addEventListener('click', async ()=>{
+    const email = signupEmail.value.trim();
+    if(!isValidEmail(email) || signupCodeCountdown > 0) return;
+    signupSendCodeBtn.disabled = true;
     try{
-      await registerWithForm();
+      const res = await authRequest('/api/auth/register/send-code', {email});
+      showToast('验证码已发送，请查收邮箱（含垃圾邮件夹）', 'success', 4000);
+      signupCodeCountdown = res.cooldown_seconds || 60;
+      signupSendCodeBtn.textContent = `${signupCodeCountdown}s 后重新发送`;
+      const timer = setInterval(()=>{
+        signupCodeCountdown -= 1;
+        if(signupCodeCountdown <= 0){
+          clearInterval(timer);
+          signupSendCodeBtn.textContent = '获取验证码';
+          updateSignupState();
+        } else {
+          signupSendCodeBtn.textContent = `${signupCodeCountdown}s 后重新发送`;
+        }
+      }, 1000);
     }catch(err){
-      alert('注册失败：' + (err.message || String(err)));
+      showToast(err.message || '验证码发送失败', 'error', 4000);
+      signupCodeCountdown = 0;
+      updateSignupState();
+    }
+  });
+
+  signupForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!signupSubmit.classList.contains('ready')) return;
+    signupSubmit.disabled = true;
+    try{
+      const data = await authRequest('/api/auth/register/verify-code', {
+        email: signupEmail.value.trim(),
+        code: signupCode.value.trim(),
+        password: signupPassword.value.trim(),
+      });
+      await completeAuth(data);
+    }catch(err){
+      showToast(err.message || '注册失败', 'error', 4500);
+    }finally{
+      signupSubmit.disabled = false;
     }
   });
 
@@ -1675,6 +1805,24 @@
   const scenarioAnswers = new Array(onbQuestions.length).fill(null);
   let currentQ = 0;
 
+  // ---------- 前置提问：左侧进度导览（仅全屏模式渲染，弹窗模式下容器不存在） ----------
+  const onbRailSteps = [...document.querySelectorAll('.onb-rail-step')];
+  function updateOnbRail(){
+    if(!onbRailSteps.length) return;
+    const stage = onbOutro.classList.contains('active') ? 'outro'
+      : onbStep2.classList.contains('active') ? 'questions'
+      : 'basic';
+    onbRailSteps.forEach(step=>{
+      const idx = Number(step.dataset.rq);
+      step.classList.remove('current','done');
+      if(stage === 'outro'){ step.classList.add('done'); }
+      else if(stage === 'questions'){
+        if(idx < currentQ) step.classList.add('done');
+        else if(idx === currentQ) step.classList.add('current');
+      }
+    });
+  }
+
   function showQuestion(i){
     onbQuestions.forEach(q=>q.classList.toggle('active', Number(q.dataset.q) === i));
     onbProgressFill.style.width = `${((i + 1) / onbQuestions.length) * 100}%`;
@@ -1682,6 +1830,7 @@
     onbPrevQ.classList.toggle('show', i > 0);
     onbNextQ.classList.toggle('ready', !!scenarioAnswers[i]);
     onbNextQ.textContent = i === onbQuestions.length - 1 ? '提交 →' : '下一题 →';
+    updateOnbRail();
   }
 
   onbQuestions.forEach(q=>{
@@ -1735,6 +1884,7 @@
 
     onbStep2.classList.remove('active');
     onbOutro.classList.add('active');
+    updateOnbRail();
     setTimeout(()=>{
       closeOnboarding();
       goto('chat');

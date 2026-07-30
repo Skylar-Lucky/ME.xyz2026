@@ -1,0 +1,22 @@
+# 部署脚本会用 sed 替换 __SERVER_NAME__ 后写到 /etc/nginx/sites-available/mexyz
+# __SERVER_NAME__ 没有域名时会被替换为 "_"（匹配任意 Host，纯 IP 访问）
+# 有域名时替换为你的域名；跑完 certbot 后 certbot 会自动把这个文件改成带 443/SSL 的版本
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __SERVER_NAME__;
+
+    client_max_body_size 20m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8010;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

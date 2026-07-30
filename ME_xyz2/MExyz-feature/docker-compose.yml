@@ -1,0 +1,20 @@
+services:
+  mexyz:
+    build: .
+    container_name: mexyz
+    restart: always
+    ports:
+      # 只绑定到本机回环地址——对外访问统一走 nginx/Caddy 反代 80/443，
+      # 容器端口不直接暴露给公网。
+      - "127.0.0.1:8010:8010"
+    env_file:
+      - backend/.env
+    environment:
+      # 数据库和记忆图谱 CSV 都落到同一个持久化卷里，方便统一备份
+      - DATABASE_PATH=/app/backend/data/me.db
+      - MEMORY_GRAPH_CSV_PATH=/app/backend/data/mexyz_memory_events.csv
+    volumes:
+      - mexyz_data:/app/backend/data
+
+volumes:
+  mexyz_data:

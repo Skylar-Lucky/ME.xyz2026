@@ -26,6 +26,8 @@ from models import (
     ChatRequest,
     ChatResponse,
     CreateMainResponse,
+    EmailCodeRequest,
+    EmailCodeSendResponse,
     EnsureRoleSessionRequest,
     EnsureRoleSessionResponse,
     GateState,
@@ -41,6 +43,7 @@ from models import (
     PersonaFull,
     PersonaPublic,
     PersonasListResponse,
+    RegisterVerifyRequest,
     RoleChatRequest,
     RoleChatResponse,
     RoleSessionSummary,
@@ -58,7 +61,7 @@ app.include_router(memory_graph_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://mexyz2026.com", "https://www.mexyz2026.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +108,24 @@ def health():
 @app.post("/api/auth/register", response_model=AuthResponse)
 def api_register(body: AuthRequest):
     user = auth.create_user(body.email, body.password, body.nickname)
+    store.ensure_user_bootstrap(user["id"])
+    token = auth.create_token(user["id"])
+    return AuthResponse(
+        token=token,
+        user=UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname")),
+    )
+
+
+@app.post("/api/auth/register/send-code", response_model=EmailCodeSendResponse)
+def api_register_send_code(body: EmailCodeRequest):
+    cooldown = auth.request_email_code(body.email, purpose="register")
+    return EmailCodeSendResponse(cooldown_seconds=cooldown)
+
+
+@app.post("/api/auth/register/verify-code", response_model=AuthResponse)
+def api_register_verify_code(body: RegisterVerifyRequest):
+    auth.verify_email_code(body.email, body.code, purpose="register")
+    user = auth.create_user(body.email, body.password, body.nickname, email_verified=True)
     store.ensure_user_bootstrap(user["id"])
     token = auth.create_token(user["id"])
     return AuthResponse(

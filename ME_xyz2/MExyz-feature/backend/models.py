@@ -185,6 +185,22 @@ class AuthResponse(BaseModel):
     user: UserPublic
 
 
+class EmailCodeRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+
+
+class EmailCodeSendResponse(BaseModel):
+    ok: bool = True
+    cooldown_seconds: int
+
+
+class RegisterVerifyRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    code: str = Field(..., min_length=6, max_length=6)
+    password: str = Field(..., min_length=6)
+    nickname: Optional[str] = None
+
+
 # ---------- Memory ----------
 
 class OrganizeMemoryRequest(BaseModel):

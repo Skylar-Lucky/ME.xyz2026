@@ -17,10 +17,27 @@ _SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT,
   nickname TEXT,
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  oauth_provider TEXT,
+  oauth_sub TEXT,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS email_verification_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  purpose TEXT NOT NULL DEFAULT 'register',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  consumed_at TEXT,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_codes_email
+  ON email_verification_codes(email, created_at);
 
 CREATE TABLE IF NOT EXISTS sessions (
   user_id TEXT NOT NULL,
@@ -119,6 +136,18 @@ def get_connection() -> sqlite3.Connection:
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
+    user_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()
+    }
+    user_additions = {
+        "email_verified": "INTEGER NOT NULL DEFAULT 0",
+        "oauth_provider": "TEXT",
+        "oauth_sub": "TEXT",
+    }
+    for name, sql_type in user_additions.items():
+        if name not in user_cols:
+            conn.execute(f"ALTER TABLE users ADD COLUMN {name} {sql_type}")
+
     session_cols = {
         row[1] for row in conn.execute("PRAGMA table_info(sessions)").fetchall()
     }

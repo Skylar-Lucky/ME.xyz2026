@@ -1,0 +1,16 @@
+[Unit]
+Description=ME.xyz FastAPI backend
+After=network.target
+
+[Service]
+Type=simple
+User=mexyz
+Group=mexyz
+WorkingDirectory=/opt/mexyz/MExyz-feature/backend
+ExecStart=/opt/mexyz/MExyz-feature/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8010 --workers 2
+Restart=on-failure
+RestartSec=3
+# .env 由 python-dotenv 在 backend/ 目录下自动加载，无需在此声明 EnvironmentFile
+
+[Install]
+WantedBy=multi-user.target
