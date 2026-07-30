@@ -79,14 +79,14 @@
   .app{display:flex; flex-direction:column; height:100vh;}
 
   .top-nav{
-    height:64px; flex-shrink:0;
+    height:72px; flex-shrink:0;
     background:var(--canvas);
     border-bottom:1px solid var(--hairline);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--space-xl);
   }
   .logo{
-    font-family:var(--font-logo); font-weight:500; font-size:22px;
+    font-family:var(--font-logo); font-weight:500; font-size:24px;
     letter-spacing:0.3px;
     display:flex; align-items:center; gap:8px;
     cursor:pointer;
@@ -96,11 +96,11 @@
   .nav-item{position:relative;}
   .nav-link{
     display:flex; align-items:center; gap:5px;
-    padding:9px 16px; border-radius:var(--radius-pill);
-    font-size:15.5px; font-weight:500; color:var(--body);
+    padding:10px 18px; border-radius:var(--radius-pill);
+    font-size:16.5px; font-weight:500; color:var(--body);
     transition:all .18s ease;
   }
-  .nav-link .caret{font-size:12px; transition:transform .18s ease;}
+  .nav-link .caret{font-size:13px; transition:transform .18s ease;}
   .nav-item:hover .nav-link .caret{transform:rotate(180deg);}
   .nav-link:hover{color:var(--ink); background:var(--surface-strong);}
   .nav-link.active{background:var(--accent-slate-soft); color:var(--accent-slate);}
@@ -117,18 +117,18 @@
   }
   .nav-item:hover .nav-dropdown{opacity:1; visibility:visible; transform:translateY(0);}
   .nav-dropdown-item{
-    display:block; padding:10px 12px; border-radius:var(--radius-md);
-    font-size:15px; color:var(--body);
+    display:block; padding:11px 13px; border-radius:var(--radius-md);
+    font-size:16px; color:var(--body);
   }
   .nav-dropdown-item:hover{background:var(--surface-strong); color:var(--ink);}
   .avatar-dropdown{left:auto; right:0;}
 
   .nav-right{display:flex; align-items:center; gap:12px;}
   .avatar-btn{
-    width:36px;height:36px;border-radius:50%;
+    width:42px;height:42px;border-radius:50%;
     background:var(--surface-strong); border:1px solid var(--hairline-strong);
     display:flex; align-items:center; justify-content:center;
-    font-size:17.5px; color:var(--ink);
+    font-size:19px; color:var(--ink);
   }
 
   .view{
@@ -245,7 +245,7 @@
   .info-hero .pull-quote{font-size:18.5px; margin-top:var(--space-lg); margin-bottom:0;}
 
   /* ---------- 情景故事 Tab 卡片 ---------- */
-  .story-tabs{display:flex; gap:6px; background:var(--surface-strong); padding:4px; border-radius:var(--radius-pill); width:max-content; margin-bottom:var(--space-lg);}
+  .story-tabs{display:flex; gap:6px; background:var(--surface-strong); padding:4px; border-radius:var(--radius-pill); width:max-content; margin:var(--space-xl) 0;}
   .story-tab-btn{padding:8px 18px; border-radius:var(--radius-pill); font-size:15px; font-weight:500; color:var(--body); transition:all .18s ease;}
   .story-tab-btn:hover{color:var(--ink);}
   .story-tab-btn.active{background:var(--ink); color:#fff;}
@@ -504,6 +504,8 @@
 
   .onb-outro{text-align:center; padding:60px 0;}
   .onb-outro-text{font-family:var(--font-display); font-weight:300; font-size:26.5px; color:var(--ink-soft);}
+  .onb-outro-sub{font-size:15px; color:var(--muted); margin-top:var(--space-sm); line-height:1.6;}
+  .onb-outro-btn{margin-top:var(--space-xl);}
 
   /* ---------- 对话 ---------- */
   #view-chat{flex-direction:row;}
@@ -1413,7 +1415,9 @@
 
   <!-- 完成过渡 -->
   <div class="onb-panel onb-outro" id="onbOutro">
-    <p class="onb-outro-text">好，我们开始吧。</p>
+    <p class="onb-outro-text">好，我们看到了几种未来的你。</p>
+    <p class="onb-outro-sub">接下来，去主聊天里，把此刻真正的纠结说给我们听。</p>
+    <button class="btn-primary onb-outro-btn" id="onbEnterChatBtn" type="button">Get Started</button>
   </div>
 </div>
 
@@ -1885,11 +1889,12 @@
     onbStep2.classList.remove('active');
     onbOutro.classList.add('active');
     updateOnbRail();
-    setTimeout(()=>{
-      closeOnboarding();
-      goto('chat');
-    }, 1400);
   }
+
+  document.getElementById('onbEnterChatBtn').addEventListener('click', ()=>{
+    closeOnboarding();
+    goto('chat');
+  });
 
   // ---------- 前置提问：容器切换（全屏 / 弹窗） ----------
   const onbContent = document.getElementById('onbContent');
