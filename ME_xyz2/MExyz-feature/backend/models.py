@@ -201,6 +201,23 @@ class RegisterVerifyRequest(BaseModel):
     nickname: Optional[str] = None
 
 
+class UpdateProfileRequest(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=24)
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6)
+
+
+class DeleteAccountRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+
+
+class OkResponse(BaseModel):
+    ok: bool = True
+
+
 # ---------- Memory ----------
 
 class OrganizeMemoryRequest(BaseModel):

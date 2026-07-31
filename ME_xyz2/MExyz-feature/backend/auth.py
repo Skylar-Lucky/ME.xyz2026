@@ -221,6 +221,59 @@ def get_user_by_id(user_id: str) -> dict[str, Any] | None:
         conn.close()
 
 
+def update_nickname(user_id: str, nickname: str) -> dict[str, Any]:
+    nickname = nickname.strip()
+    if not nickname:
+        raise HTTPException(status_code=400, detail="昵称不能为空")
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE users SET nickname = ? WHERE id = ?", (nickname, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return get_user_by_id(user_id)  # type: ignore
+
+
+def change_password(user_id: str, old_password: str, new_password: str) -> None:
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="新密码至少 6 位")
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row or not verify_password(old_password, row["password_hash"]):
+            # 400, not 401 — the frontend's global api() helper treats any 401 as
+            # "session expired" and force-logs-out; a wrong current password is a
+            # validation error, not an auth failure.
+            raise HTTPException(status_code=400, detail="当前密码不正确")
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (hash_password(new_password), user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_account(user_id: str, email_confirm: str) -> None:
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="user not found")
+        if row["email"].strip().lower() != email_confirm.strip().lower():
+            raise HTTPException(status_code=400, detail="邮箱确认不匹配")
+        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM personas WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM mindmap_nodes WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM mindmap_edges WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM events WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def get_current_user(
     creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict[str, Any]:

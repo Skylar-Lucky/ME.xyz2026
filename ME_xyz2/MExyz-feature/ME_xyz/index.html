@@ -672,6 +672,33 @@
   .reonboard-card p{font-size:14px; color:var(--muted-soft);}
   .btn-pill-light{background:#fff; color:var(--ink); padding:9px 18px; border-radius:var(--radius-pill); font-size:14.5px; font-weight:500; white-space:nowrap;}
 
+  .profile-row.clickable{cursor:pointer;}
+  .profile-row.disabled{opacity:.55;}
+  .profile-row.disabled:hover{background:transparent;}
+
+  .profile-modal-title{font-family:var(--font-display); font-weight:400; font-size:22px; margin-bottom:var(--space-lg); color:var(--ink);}
+  .profile-modal-panel .field-label{display:block; margin-bottom:var(--space-sm);}
+  .profile-logout-row{
+    display:flex; align-items:center; justify-content:space-between; gap:var(--space-base);
+    padding-top:var(--space-lg); margin-top:var(--space-lg); border-top:1px solid var(--hairline);
+  }
+  .profile-logout-row div:first-child{font-size:15px; font-weight:500; color:var(--ink-soft);}
+  .profile-logout-row p{font-size:13px; color:var(--muted); margin-top:2px;}
+
+  .btn-danger{
+    background:transparent; color:var(--error); padding:9px 18px; border-radius:var(--radius-pill);
+    font-size:14.5px; font-weight:500; border:1px solid var(--error); transition:all .18s ease; width:100%;
+  }
+  .btn-danger:hover:not(:disabled){background:var(--error); color:#fff;}
+  .btn-danger:disabled{opacity:.4; cursor:default;}
+
+  .profile-danger-zone{
+    border:1px solid var(--error); border-radius:var(--radius-xl); padding:var(--space-lg);
+    margin-top:var(--space-xl);
+  }
+  .profile-danger-zone h4{color:var(--error); font-size:15px; font-weight:600; margin-bottom:6px;}
+  .profile-danger-zone p{font-size:13.5px; color:var(--muted); margin-bottom:var(--space-base); line-height:1.6;}
+
   @media (max-width:860px){
     .feature-card{width:78vw;}
     .chat-sidebar{width:200px;}
@@ -899,8 +926,8 @@
       <div class="profile-head">
         <div class="profile-avatar"><i class="ph ph-user"></i></div>
         <div>
-          <h2>访客用户</h2>
-          <p>已完成 5 题前置问题 · 生成 2 个未来角色</p>
+          <h2 id="profileNickname">访客用户</h2>
+          <p id="profileStats">登录后即可查看你的画像与角色进度</p>
         </div>
       </div>
 
@@ -909,24 +936,23 @@
           <h4>重新认识自己</h4>
           <p>重新回答 5 个前置问题，更新你的画像标签</p>
         </div>
-        <button class="btn-pill-light">开始</button>
+        <button class="btn-pill-light" id="profileReonboardBtn" type="button">开始</button>
       </div>
 
       <div class="profile-section">
         <h4>账号</h4>
         <div class="profile-list">
-          <div class="profile-row">
+          <div class="profile-row clickable" id="profileEditRow">
             <div class="profile-row-left"><i class="ph ph-pencil-simple"></i>编辑个人资料</div>
             <i class="ph ph-caret-right chev"></i>
           </div>
           <div class="profile-row">
             <div class="profile-row-left"><i class="ph ph-envelope-simple"></i>绑定邮箱</div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span class="profile-row-val">demo@me.xyz</span>
-              <i class="ph ph-caret-right chev"></i>
+              <span class="profile-row-val" id="profileEmailVal">—</span>
             </div>
           </div>
-          <div class="profile-row">
+          <div class="profile-row clickable" id="profileSecurityRow">
             <div class="profile-row-left"><i class="ph ph-lock-simple"></i>账号与安全</div>
             <i class="ph ph-caret-right chev"></i>
           </div>
@@ -936,13 +962,13 @@
       <div class="profile-section">
         <h4>其他</h4>
         <div class="profile-list">
-          <div class="profile-row">
+          <div class="profile-row disabled">
             <div class="profile-row-left"><i class="ph ph-bell-simple"></i>通知设置</div>
-            <i class="ph ph-caret-right chev"></i>
+            <span class="oauth-badge">即将推出</span>
           </div>
-          <div class="profile-row">
+          <div class="profile-row disabled">
             <div class="profile-row-left"><i class="ph ph-question"></i>帮助与反馈</div>
-            <i class="ph ph-caret-right chev"></i>
+            <span class="oauth-badge">即将推出</span>
           </div>
         </div>
       </div>
@@ -1326,6 +1352,66 @@
   </div>
 </div>
 
+<!-- 我的 · 编辑个人资料弹窗 -->
+<div class="modal-overlay" id="profileEditModalOverlay">
+  <div class="modal-panel profile-modal-panel" style="width:420px;">
+    <button class="modal-close" id="profileEditModalClose"><i class="ph ph-x"></i></button>
+    <h3 class="profile-modal-title">编辑个人资料</h3>
+    <form id="profileEditForm">
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">昵称</span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="text" id="profileEditNickname" maxlength="24" autocomplete="nickname">
+        </div>
+      </div>
+      <button class="btn-submit" id="profileEditSubmit" type="submit">保存</button>
+    </form>
+  </div>
+</div>
+
+<!-- 我的 · 账号与安全弹窗 -->
+<div class="modal-overlay" id="accountSecurityModalOverlay">
+  <div class="modal-panel profile-modal-panel" style="width:460px;">
+    <button class="modal-close" id="accountSecurityModalClose"><i class="ph ph-x"></i></button>
+    <h3 class="profile-modal-title">账号与安全</h3>
+
+    <form id="changePasswordForm">
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">当前密码</span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="password" id="oldPasswordInput" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">新密码 <span class="field-hint">at least 6 characters</span></span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="password" id="newPasswordInput" autocomplete="new-password">
+        </div>
+      </div>
+      <button class="btn-submit" id="changePasswordSubmit" type="submit">更新密码</button>
+    </form>
+
+    <div class="profile-logout-row">
+      <div>
+        <div>退出登录</div>
+        <p>退出当前账号，需要重新登录</p>
+      </div>
+      <button class="btn-outline" id="logoutBtn" type="button" style="padding:9px 18px;font-size:14.5px;">Log out</button>
+    </div>
+
+    <div class="profile-danger-zone">
+      <h4>注销账户</h4>
+      <p>此操作不可撤销，将永久删除你的账号及全部对话、角色卡片与记忆图谱数据。请输入你的邮箱地址以确认。</p>
+      <div class="field-group">
+        <div class="field-input-wrap">
+          <input class="field-input" type="email" id="deleteConfirmEmail" placeholder="输入你的邮箱地址">
+        </div>
+      </div>
+      <button class="btn-danger" id="deleteAccountBtn" type="button" disabled>确认注销账户</button>
+    </div>
+  </div>
+</div>
+
 <!-- 前置提问 · 共享内容（在两种容器间移动） -->
 <div id="onbContent" style="display:none;">
   <!-- Step 1：基础信息收集 -->
@@ -1438,6 +1524,9 @@
     }
     if(name === 'personas' && typeof loadPersonasGallery === 'function'){
       loadPersonasGallery();
+    }
+    if(name === 'profile' && typeof loadProfileView === 'function'){
+      loadProfileView();
     }
   }
   document.querySelectorAll('[data-view]').forEach(el=>{
@@ -1892,6 +1981,12 @@
     const profileNameEl = document.querySelector('#view-profile .profile-head h2');
     if(profileNameEl && profile.nickname) profileNameEl.textContent = profile.nickname;
 
+    if(profile.nickname && getLoggedIn()){
+      api('/api/auth/me', {method:'PATCH', body: JSON.stringify({nickname: profile.nickname})})
+        .then(me=>localStorage.setItem('mexyz_user', JSON.stringify(me)))
+        .catch(()=>{});
+    }
+
     onbStep2.classList.remove('active');
     onbOutro.classList.add('active');
     updateOnbRail();
@@ -2032,6 +2127,155 @@
     }
     return data;
   }
+
+  // ---------- 我的 ----------
+  let profileCurrentEmail = '';
+
+  async function loadProfileView(){
+    const nicknameEl = document.getElementById('profileNickname');
+    const statsEl = document.getElementById('profileStats');
+    const emailEl = document.getElementById('profileEmailVal');
+    if(!getLoggedIn()){
+      if(nicknameEl) nicknameEl.textContent = '访客用户';
+      if(statsEl) statsEl.textContent = '登录后即可查看你的画像与角色进度';
+      if(emailEl) emailEl.textContent = '—';
+      return;
+    }
+    try{
+      const [me, personasRes] = await Promise.all([
+        api('/api/auth/me'),
+        api('/api/personas').catch(()=>({personas: []})),
+      ]);
+      profileCurrentEmail = me.email;
+      localStorage.setItem('mexyz_user', JSON.stringify(me));
+      if(nicknameEl) nicknameEl.textContent = me.nickname || me.email.split('@')[0];
+      if(emailEl) emailEl.textContent = me.email;
+      const personaCount = (personasRes.personas || []).length;
+      if(statsEl){
+        statsEl.textContent = getOnboarded()
+          ? `已完成前置问题 · 生成 ${personaCount} 个未来角色`
+          : `还没有完成前置问题 · 生成 ${personaCount} 个未来角色`;
+      }
+    }catch(err){
+      // 拉取失败时保留已有展示，不打断页面
+    }
+  }
+
+  document.getElementById('profileReonboardBtn').addEventListener('click', ()=>{
+    openOnboarding('modal');
+  });
+
+  // ---------- 我的 · 编辑个人资料 ----------
+  const profileEditModalOverlay = document.getElementById('profileEditModalOverlay');
+  const profileEditNickname = document.getElementById('profileEditNickname');
+  const profileEditForm = document.getElementById('profileEditForm');
+  const profileEditSubmit = document.getElementById('profileEditSubmit');
+
+  profileEditNickname.addEventListener('input', ()=>{
+    profileEditSubmit.classList.toggle('ready', profileEditNickname.value.trim().length > 0);
+  });
+
+  document.getElementById('profileEditRow').addEventListener('click', ()=>{
+    profileEditNickname.value = document.getElementById('profileNickname').textContent.trim();
+    profileEditSubmit.classList.add('ready');
+    profileEditModalOverlay.classList.add('show');
+  });
+  document.getElementById('profileEditModalClose').addEventListener('click', ()=>{
+    profileEditModalOverlay.classList.remove('show');
+  });
+  profileEditForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const nickname = profileEditNickname.value.trim();
+    if(!nickname) return;
+    const submitBtn = document.getElementById('profileEditSubmit');
+    submitBtn.disabled = true;
+    try{
+      const me = await api('/api/auth/me', {method:'PATCH', body: JSON.stringify({nickname})});
+      localStorage.setItem('mexyz_user', JSON.stringify(me));
+      document.getElementById('profileNickname').textContent = me.nickname || me.email.split('@')[0];
+      profileEditModalOverlay.classList.remove('show');
+      showToast('资料已更新', 'success', 3000);
+    }catch(err){
+      showToast(err.message || '更新失败', 'error', 4000);
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+
+  // ---------- 我的 · 账号与安全 ----------
+  const accountSecurityModalOverlay = document.getElementById('accountSecurityModalOverlay');
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  const changePasswordSubmit = document.getElementById('changePasswordSubmit');
+  const oldPasswordInput = document.getElementById('oldPasswordInput');
+  const newPasswordInput = document.getElementById('newPasswordInput');
+  const deleteConfirmEmail = document.getElementById('deleteConfirmEmail');
+  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+  function updateChangePasswordReady(){
+    changePasswordSubmit.classList.toggle('ready', oldPasswordInput.value.trim().length >= 6 && newPasswordInput.value.trim().length >= 6);
+  }
+  [oldPasswordInput, newPasswordInput].forEach(input=>input.addEventListener('input', updateChangePasswordReady));
+
+  document.getElementById('profileSecurityRow').addEventListener('click', ()=>{
+    changePasswordForm.reset();
+    changePasswordSubmit.classList.remove('ready');
+    deleteConfirmEmail.value = '';
+    deleteAccountBtn.disabled = true;
+    accountSecurityModalOverlay.classList.add('show');
+  });
+  document.getElementById('accountSecurityModalClose').addEventListener('click', ()=>{
+    accountSecurityModalOverlay.classList.remove('show');
+  });
+
+  changePasswordForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const oldPassword = oldPasswordInput.value.trim();
+    const newPassword = newPasswordInput.value.trim();
+    if(oldPassword.length < 6 || newPassword.length < 6) return;
+    const submitBtn = changePasswordSubmit;
+    submitBtn.disabled = true;
+    try{
+      await api('/api/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({old_password: oldPassword, new_password: newPassword}),
+      });
+      showToast('密码已更新', 'success', 3000);
+      changePasswordForm.reset();
+    }catch(err){
+      showToast(err.message || '密码更新失败', 'error', 4000);
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{
+    accountSecurityModalOverlay.classList.remove('show');
+    setLoggedIn(false);
+    setOnboarded(false);
+    showToast('已退出登录', 'success', 3000);
+    goto('home');
+  });
+
+  deleteConfirmEmail.addEventListener('input', ()=>{
+    const match = profileCurrentEmail && deleteConfirmEmail.value.trim().toLowerCase() === profileCurrentEmail.toLowerCase();
+    deleteAccountBtn.disabled = !match;
+  });
+
+  deleteAccountBtn.addEventListener('click', async ()=>{
+    if(deleteAccountBtn.disabled) return;
+    deleteAccountBtn.disabled = true;
+    try{
+      await api('/api/auth/me', {method:'DELETE', body: JSON.stringify({email: deleteConfirmEmail.value.trim()})});
+      accountSecurityModalOverlay.classList.remove('show');
+      setLoggedIn(false);
+      setOnboarded(false);
+      showToast('账户已注销', 'success', 3500);
+      goto('home');
+    }catch(err){
+      showToast(err.message || '注销失败', 'error', 4000);
+      deleteAccountBtn.disabled = false;
+    }
+  });
 
   function currentSessionId(){
     if(activeChat.kind === 'main') return activeChat.id;

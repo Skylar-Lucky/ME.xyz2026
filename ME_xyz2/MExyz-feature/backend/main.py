@@ -22,10 +22,12 @@ from llm_service import LLMError, chat, chat_json
 from models import (
     AuthRequest,
     AuthResponse,
+    ChangePasswordRequest,
     ChatMessage,
     ChatRequest,
     ChatResponse,
     CreateMainResponse,
+    DeleteAccountRequest,
     EmailCodeRequest,
     EmailCodeSendResponse,
     EnsureRoleSessionRequest,
@@ -38,6 +40,7 @@ from models import (
     MindmapExtractRequest,
     MindmapExtractResponse,
     MindmapNode,
+    OkResponse,
     OrganizeMemoryRequest,
     OrganizeMemoryResponse,
     PersonaFull,
@@ -49,6 +52,7 @@ from models import (
     RoleSessionSummary,
     SessionDetailResponse,
     SessionsListResponse,
+    UpdateProfileRequest,
     UserPublic,
 )
 
@@ -148,6 +152,24 @@ def api_login(body: AuthRequest):
 @app.get("/api/auth/me", response_model=UserPublic)
 def api_me(user: dict = Depends(auth.get_current_user)):
     return UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname"))
+
+
+@app.patch("/api/auth/me", response_model=UserPublic)
+def api_update_me(body: UpdateProfileRequest, user: dict = Depends(auth.get_current_user)):
+    updated = auth.update_nickname(user["id"], body.nickname)
+    return UserPublic(id=updated["id"], email=updated["email"], nickname=updated.get("nickname"))
+
+
+@app.post("/api/auth/change-password", response_model=OkResponse)
+def api_change_password(body: ChangePasswordRequest, user: dict = Depends(auth.get_current_user)):
+    auth.change_password(user["id"], body.old_password, body.new_password)
+    return OkResponse()
+
+
+@app.delete("/api/auth/me", response_model=OkResponse)
+def api_delete_me(body: DeleteAccountRequest, user: dict = Depends(auth.get_current_user)):
+    auth.delete_account(user["id"], body.email)
+    return OkResponse()
 
 
 # ---------- Main chat ----------
