@@ -1630,7 +1630,11 @@
         code: signupCode.value.trim(),
         password: signupPassword.value.trim(),
       });
-      await completeAuth(data);
+      showToast('账户创建成功，请登录', 'success', 4000);
+      loginEmail.value = data.user?.email || signupEmail.value.trim();
+      loginPassword.value = '';
+      updateLoginSubmitState();
+      goto('login');
     }catch(err){
       showToast(err.message || '注册失败', 'error', 4500);
     }finally{
@@ -1975,7 +1979,13 @@
     if(!stack){ alert(message); return; }
     const el = document.createElement('div');
     el.className = 'toast' + (type === 'success' ? ' toast-success' : type === 'error' ? ' toast-error' : '');
-    el.textContent = message;
+    const iconClass = type === 'success' ? 'ph-check-circle' : type === 'error' ? 'ph-x-circle' : '';
+    if(iconClass){
+      const icon = document.createElement('i');
+      icon.className = 'ph ph-bold ' + iconClass;
+      el.appendChild(icon);
+    }
+    el.appendChild(document.createTextNode(message));
     stack.appendChild(el);
     requestAnimationFrame(()=>el.classList.add('show'));
     setTimeout(()=>{
