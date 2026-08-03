@@ -2917,15 +2917,30 @@
       return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
     }
 
+    // 展开/收起时保持图标（右下角）位置不变，卡片朝左上方向展开，而不是从左上角撑大
+    function reanchorBottomRight(beforeRect){
+      var right = beforeRect.left + beforeRect.width;
+      var bottom = beforeRect.top + beforeRect.height;
+      var newLeft = right - widget.offsetWidth;
+      var newTop = bottom - widget.offsetHeight;
+      var pos = clampPosition(newLeft, newTop);
+      applyPosition(pos);
+      savePosition(pos);
+    }
+
     function collapse(persist){
+      var beforeRect = widget.getBoundingClientRect();
       widget.classList.add('beta-widget--collapsed');
+      reanchorBottomRight(beforeRect);
       if(persist){
         try { localStorage.setItem(STORAGE_KEY, todayStr()); } catch(e){}
       }
     }
 
     function expand(){
+      var beforeRect = widget.getBoundingClientRect();
       widget.classList.remove('beta-widget--collapsed');
+      reanchorBottomRight(beforeRect);
       try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
     }
 
