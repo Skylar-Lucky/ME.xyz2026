@@ -202,6 +202,36 @@
   .btn-primary:hover{background:var(--ink-soft);}
   .btn-outline{background:transparent; color:var(--ink); padding:13px 26px; border-radius:var(--radius-pill); font-size:15.5px; font-weight:500; border:1px solid var(--hairline-strong); display:inline-flex; align-items:center; gap:6px; transition:all .18s ease;}
   .btn-outline:hover{border-color:var(--ink); background:var(--ink); color:#fff;}
+
+  /* ---------- 内测反馈悬浮组件 ---------- */
+  .beta-widget{position:fixed; bottom:24px; right:24px; z-index:9999; font-family:var(--font-body);}
+  .beta-widget__card{
+    position:relative; width:320px; max-width:calc(100vw - 40px);
+    background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl);
+    padding:var(--space-md) var(--space-md) var(--space-base); box-shadow:0 8px 24px rgba(12,10,9,.12); box-sizing:border-box;
+  }
+  .beta-widget__close{
+    position:absolute; top:14px; right:14px; border:none; background:transparent; cursor:pointer;
+    padding:4px; color:var(--muted-soft); font-size:16px; line-height:1; transition:color .15s ease;
+  }
+  .beta-widget__close:hover{color:var(--ink);}
+  .beta-widget__header{display:flex; align-items:center; gap:10px; margin-bottom:var(--space-xs); padding-right:20px;}
+  .beta-widget__icon{flex-shrink:0; font-size:20px; color:var(--ink);}
+  .beta-widget__title{font-family:var(--font-display); font-size:15px; font-weight:500; line-height:1.5; color:var(--ink); margin:0;}
+  .beta-widget__desc{font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 var(--space-base);}
+  .beta-widget__btn{
+    display:block; width:100%; box-sizing:border-box; padding:10px; font-size:13px; font-weight:500;
+    text-align:center; text-decoration:none; color:var(--ink); background:transparent;
+    border:1px solid var(--hairline-strong); border-radius:var(--radius-pill); cursor:pointer; transition:all .18s ease;
+  }
+  .beta-widget__btn:hover{border-color:var(--ink); background:var(--ink); color:#fff;}
+  .beta-widget__bubble{
+    display:none; align-items:center; justify-content:center; width:44px; height:44px;
+    border-radius:var(--radius-pill); background:var(--surface-card); border:1px solid var(--hairline);
+    box-shadow:0 8px 24px rgba(12,10,9,.12); cursor:pointer; padding:0; font-size:20px;
+  }
+  .beta-widget--collapsed .beta-widget__card{display:none;}
+  .beta-widget--collapsed .beta-widget__bubble{display:flex;}
   .btn-sm{padding:8px 16px; font-size:14px;}
   .hero-vision-showcase{
     flex:2.6 1 0; min-width:320px;
@@ -1515,6 +1545,24 @@
   </div>
 </div>
 
+<!-- 内测反馈悬浮组件（记忆图谱产品页 memory-map/ 除外） -->
+<div class="beta-widget" id="betaWidget">
+  <div class="beta-widget__card" id="betaWidgetCard">
+    <button class="beta-widget__close" id="betaWidgetClose" aria-label="收起">×</button>
+    <div class="beta-widget__header">
+      <span class="beta-widget__icon" aria-hidden="true"><i class="ph ph-chat-circle-text"></i></span>
+      <p class="beta-widget__title">产品内测中，有点小状况很正常</p>
+    </div>
+    <p class="beta-widget__desc">可能会遇到小问题，欢迎告诉我们你的体验</p>
+    <a class="beta-widget__btn" id="betaWidgetLink" href="https://my.feishu.cn/share/base/form/shrcn4CC5WVwbQ5eXsFLDlf2Dgh" target="_blank" rel="noopener">
+      1分钟吐槽一下 →
+    </a>
+  </div>
+  <button class="beta-widget__bubble" id="betaWidgetBubble" aria-label="展开反馈提示">
+    <i class="ph ph-chat-circle-text" aria-hidden="true"></i>
+  </button>
+</div>
+
 <script>
   // ---------- Nav / tab switching ----------
   const navLinks = document.querySelectorAll('.nav-link:not(.cta)');
@@ -2788,6 +2836,45 @@
   document.getElementById('graphGetStartedBtn').addEventListener('click', ()=>{
     window.location.assign('/memory-map/');
   });
+
+  // ---------- 内测反馈悬浮组件 ----------
+  (function initBetaWidget(){
+    var STORAGE_KEY = 'betaWidgetCollapsedDate';
+    var widget = document.getElementById('betaWidget');
+    var closeBtn = document.getElementById('betaWidgetClose');
+    var bubble = document.getElementById('betaWidgetBubble');
+    if(!widget || !closeBtn || !bubble) return;
+
+    function todayStr(){
+      var d = new Date();
+      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    }
+
+    function collapse(persist){
+      widget.classList.add('beta-widget--collapsed');
+      if(persist){
+        try { localStorage.setItem(STORAGE_KEY, todayStr()); } catch(e){}
+      }
+    }
+
+    function expand(){
+      widget.classList.remove('beta-widget--collapsed');
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+    }
+
+    // 每天用户第一次访问默认展开；当天内点击过关闭则保持收起
+    try {
+      var collapsedDate = localStorage.getItem(STORAGE_KEY);
+      if(collapsedDate === todayStr()){
+        widget.classList.add('beta-widget--collapsed');
+      } else if(collapsedDate){
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch(e){}
+
+    closeBtn.addEventListener('click', function(){ collapse(true); });
+    bubble.addEventListener('click', function(){ expand(); });
+  })();
 </script>
 </body>
 </html>
