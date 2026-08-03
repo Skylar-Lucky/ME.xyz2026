@@ -178,6 +178,7 @@ class UserPublic(BaseModel):
     id: str
     email: str
     nickname: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 
 class AuthResponse(BaseModel):

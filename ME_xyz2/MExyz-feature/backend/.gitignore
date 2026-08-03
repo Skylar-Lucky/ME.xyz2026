@@ -1,6 +1,7 @@
 .env
 data/*.json
 data/*.db
+data/avatars/
 *.db
 __pycache__/
 *.pyc

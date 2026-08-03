@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,6 +62,7 @@ logger = logging.getLogger("mexyz.memory")
 
 app = FastAPI(title="ME.xyz MVP API", version="0.3.0")
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "ME_xyz"
+AVATAR_DIR = Path(__file__).resolve().parent / "data" / "avatars"
 app.include_router(memory_graph_router)
 
 app.add_middleware(
@@ -70,6 +72,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads/avatars", StaticFiles(directory=AVATAR_DIR), name="avatars")
 
 
 @app.on_event("startup")
@@ -116,7 +121,10 @@ def api_register(body: AuthRequest):
     token = auth.create_token(user["id"])
     return AuthResponse(
         token=token,
-        user=UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname")),
+        user=UserPublic(
+            id=user["id"], email=user["email"], nickname=user.get("nickname"),
+            avatar_url=user.get("avatar_url"),
+        ),
     )
 
 
@@ -134,7 +142,10 @@ def api_register_verify_code(body: RegisterVerifyRequest):
     token = auth.create_token(user["id"])
     return AuthResponse(
         token=token,
-        user=UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname")),
+        user=UserPublic(
+            id=user["id"], email=user["email"], nickname=user.get("nickname"),
+            avatar_url=user.get("avatar_url"),
+        ),
     )
 
 
@@ -145,19 +156,60 @@ def api_login(body: AuthRequest):
     token = auth.create_token(user["id"])
     return AuthResponse(
         token=token,
-        user=UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname")),
+        user=UserPublic(
+            id=user["id"], email=user["email"], nickname=user.get("nickname"),
+            avatar_url=user.get("avatar_url"),
+        ),
     )
 
 
 @app.get("/api/auth/me", response_model=UserPublic)
 def api_me(user: dict = Depends(auth.get_current_user)):
-    return UserPublic(id=user["id"], email=user["email"], nickname=user.get("nickname"))
+    return UserPublic(
+        id=user["id"], email=user["email"], nickname=user.get("nickname"),
+        avatar_url=user.get("avatar_url"),
+    )
 
 
 @app.patch("/api/auth/me", response_model=UserPublic)
 def api_update_me(body: UpdateProfileRequest, user: dict = Depends(auth.get_current_user)):
     updated = auth.update_nickname(user["id"], body.nickname)
-    return UserPublic(id=updated["id"], email=updated["email"], nickname=updated.get("nickname"))
+    return UserPublic(
+        id=updated["id"], email=updated["email"], nickname=updated.get("nickname"),
+        avatar_url=updated.get("avatar_url"),
+    )
+
+
+@app.post("/api/auth/me/avatar", response_model=UserPublic)
+async def api_upload_avatar(
+    file: UploadFile = File(...),
+    user: dict = Depends(auth.get_current_user),
+):
+    content_type_ext = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/webp": "webp",
+    }
+    ext = content_type_ext.get(file.content_type)
+    if not ext:
+        raise HTTPException(status_code=400, detail="仅支持 PNG / JPG / WEBP 格式的图片")
+
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="图片大小需在 5MB 以内")
+
+    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    for old in AVATAR_DIR.glob(f"{user['id']}.*"):
+        old.unlink(missing_ok=True)
+    filename = f"{user['id']}.{ext}"
+    (AVATAR_DIR / filename).write_bytes(data)
+
+    avatar_url = f"/uploads/avatars/{filename}?v={int(time.time())}"
+    updated = auth.update_avatar(user["id"], avatar_url)
+    return UserPublic(
+        id=updated["id"], email=updated["email"], nickname=updated.get("nickname"),
+        avatar_url=updated.get("avatar_url"),
+    )
 
 
 @app.post("/api/auth/change-password", response_model=OkResponse)

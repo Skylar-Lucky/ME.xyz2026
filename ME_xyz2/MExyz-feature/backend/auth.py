@@ -116,6 +116,7 @@ def authenticate_user(email: str, password: str) -> dict[str, Any]:
             "id": row["id"],
             "email": row["email"],
             "nickname": row["nickname"],
+            "avatar_url": row["avatar_url"],
         }
     finally:
         conn.close()
@@ -211,7 +212,7 @@ def get_user_by_id(user_id: str) -> dict[str, Any] | None:
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT id, email, nickname, created_at FROM users WHERE id = ?",
+            "SELECT id, email, nickname, avatar_url, created_at FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
         if not row:
@@ -228,6 +229,16 @@ def update_nickname(user_id: str, nickname: str) -> dict[str, Any]:
     conn = get_connection()
     try:
         conn.execute("UPDATE users SET nickname = ? WHERE id = ?", (nickname, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return get_user_by_id(user_id)  # type: ignore
+
+
+def update_avatar(user_id: str, avatar_url: str) -> dict[str, Any]:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE users SET avatar_url = ? WHERE id = ?", (avatar_url, user_id))
         conn.commit()
     finally:
         conn.close()

@@ -128,8 +128,9 @@
     width:42px;height:42px;border-radius:50%;
     background:var(--surface-strong); border:1px solid var(--hairline-strong);
     display:flex; align-items:center; justify-content:center;
-    font-size:19px; color:var(--ink);
+    font-size:19px; color:var(--ink); overflow:hidden; padding:0;
   }
+  .avatar-btn img{width:100%; height:100%; object-fit:cover; border-radius:50%;}
 
   .view{
     flex:1; overflow:hidden; display:none;
@@ -321,16 +322,17 @@
   .team-card.ghost .team-name{color:var(--muted-soft); font-size:20px;}
 
   .team-tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:var(--space-base);}
-  .team-tag-group{display:flex; gap:8px;}
+  .team-tag-group{display:flex; flex-wrap:wrap; gap:8px;}
   .team-tag{
     font-size:14px; font-weight:500; color:var(--ink-soft); background:var(--surface-strong);
     border:1px solid var(--hairline); padding:6px 13px; border-radius:var(--radius-pill); transition:all .15s ease;
+    white-space:nowrap;
   }
   a.team-tag:hover{border-color:var(--ink); background:#fff; color:var(--ink);}
 
   .team-role-tag{
     display:inline-flex; align-items:center; font-size:12.5px; font-weight:600; letter-spacing:0.3px; line-height:1.5;
-    padding:6px 12px; border-radius:var(--radius-lg); margin-bottom:6px; max-width:100%; color:var(--ink-soft);
+    padding:6px 12px; border-radius:var(--radius-lg); margin-bottom:var(--space-base); max-width:100%; color:var(--ink-soft);
   }
   .team-role-desc{font-size:14.5px; color:var(--muted); line-height:1.6; margin-bottom:var(--space-base);}
 
@@ -358,7 +360,7 @@
 
   /* ---------- 登录 ---------- */
   #view-login{overflow-y:auto; align-items:center;}
-  .login-shell{width:100%; max-width:440px; margin:0 auto; padding:64px 24px 96px;}
+  .login-shell{width:100%; max-width:440px; margin:0 auto; padding:32px 24px 96px;}
   .login-logo{text-align:center; font-family:var(--font-logo); font-weight:500; font-size:22px; margin-bottom:var(--space-sm); display:flex; align-items:center; justify-content:center; gap:8px;}
   .login-title{text-align:center; font-family:var(--font-display); font-weight:600; font-size:33px; margin-bottom:var(--space-xl); color:var(--ink);}
 
@@ -682,7 +684,17 @@
   #view-profile{overflow-y:auto;}
   .profile-scroll{max-width:840px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
   .profile-head{display:flex; align-items:center; gap:var(--space-base); margin-bottom:var(--space-xxl);}
-  .profile-avatar{width:64px; height:64px; border-radius:50%; background:var(--surface-strong); display:flex; align-items:center; justify-content:center; font-size:28.5px; border:1px solid var(--hairline-strong);}
+  .profile-avatar{
+    width:64px; height:64px; border-radius:50%; background:var(--surface-strong); display:flex;
+    align-items:center; justify-content:center; font-size:28.5px; border:1px solid var(--hairline-strong);
+    position:relative; overflow:hidden; cursor:pointer; flex-shrink:0; padding:0;
+  }
+  .profile-avatar img{width:100%; height:100%; object-fit:cover; border-radius:50%;}
+  .profile-avatar-overlay{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(12,10,9,.5); color:#fff; font-size:16px; opacity:0; transition:opacity .15s ease;
+  }
+  .profile-avatar:hover .profile-avatar-overlay{opacity:1;}
   .profile-head h2{font-family:var(--font-display); font-weight:400; font-size:26.5px;}
   .profile-head p{font-size:14.5px; color:var(--muted); margin-top:2px;}
 
@@ -797,7 +809,7 @@
     </nav>
     <div class="nav-right">
       <div class="nav-item">
-        <button class="avatar-btn"><i class="ph ph-user"></i></button>
+        <button class="avatar-btn"><i class="ph ph-user" id="navAvatarIcon"></i><img id="navAvatarImg" alt="" style="display:none"></button>
         <div class="nav-dropdown avatar-dropdown">
           <a class="nav-dropdown-item" data-view="personas">未来的我</a>
           <a class="nav-dropdown-item" data-view="graph">记忆图谱</a>
@@ -960,7 +972,12 @@
   <div class="view" id="view-profile">
     <div class="profile-scroll">
       <div class="profile-head">
-        <div class="profile-avatar"><i class="ph ph-user"></i></div>
+        <button class="profile-avatar" id="profileAvatarBtn" type="button" aria-label="上传头像">
+          <i class="ph ph-user" id="profileAvatarIcon"></i>
+          <img id="profileAvatarImg" alt="" style="display:none">
+          <span class="profile-avatar-overlay"><i class="ph ph-camera"></i></span>
+        </button>
+        <input type="file" id="profileAvatarInput" accept="image/png,image/jpeg,image/webp" hidden>
         <div>
           <h2 id="profileNickname">访客用户</h2>
           <p id="profileStats">登录后即可查看你的画像与角色进度</p>
@@ -2185,6 +2202,30 @@
   // ---------- 我的 ----------
   let profileCurrentEmail = '';
 
+  function setAvatarDisplay(avatarUrl){
+    const url = avatarUrl ? (API + avatarUrl) : '';
+    [
+      {img: document.getElementById('profileAvatarImg'), icon: document.getElementById('profileAvatarIcon')},
+      {img: document.getElementById('navAvatarImg'), icon: document.getElementById('navAvatarIcon')},
+    ].forEach(({img, icon})=>{
+      if(!img || !icon) return;
+      if(url){
+        img.src = url;
+        img.style.display = 'block';
+        icon.style.display = 'none';
+      }else{
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        icon.style.display = '';
+      }
+    });
+  }
+
+  try{
+    const cachedUser = JSON.parse(localStorage.getItem('mexyz_user') || 'null');
+    if(cachedUser && cachedUser.avatar_url) setAvatarDisplay(cachedUser.avatar_url);
+  }catch(e){}
+
   async function loadProfileView(){
     const nicknameEl = document.getElementById('profileNickname');
     const statsEl = document.getElementById('profileStats');
@@ -2193,6 +2234,7 @@
       if(nicknameEl) nicknameEl.textContent = '访客用户';
       if(statsEl) statsEl.textContent = '登录后即可查看你的画像与角色进度';
       if(emailEl) emailEl.textContent = '—';
+      setAvatarDisplay('');
       return;
     }
     try{
@@ -2204,6 +2246,7 @@
       localStorage.setItem('mexyz_user', JSON.stringify(me));
       if(nicknameEl) nicknameEl.textContent = me.nickname || me.email.split('@')[0];
       if(emailEl) emailEl.textContent = me.email;
+      setAvatarDisplay(me.avatar_url);
       const personaCount = (personasRes.personas || []).length;
       if(statsEl){
         statsEl.textContent = getOnboarded()
@@ -2214,6 +2257,45 @@
       // 拉取失败时保留已有展示，不打断页面
     }
   }
+
+  // ---------- 我的 · 上传头像 ----------
+  const profileAvatarBtn = document.getElementById('profileAvatarBtn');
+  const profileAvatarInput = document.getElementById('profileAvatarInput');
+  profileAvatarBtn.addEventListener('click', ()=>{
+    if(!getLoggedIn()){ showToast('请先登录', 'info', 3000); return; }
+    profileAvatarInput.click();
+  });
+  profileAvatarInput.addEventListener('change', async ()=>{
+    const file = profileAvatarInput.files[0];
+    profileAvatarInput.value = '';
+    if(!file) return;
+    if(!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)){
+      showToast('仅支持 PNG / JPG / WEBP 格式的图片', 'error', 4000);
+      return;
+    }
+    if(file.size > 5 * 1024 * 1024){
+      showToast('图片大小需在 5MB 以内', 'error', 4000);
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    try{
+      const res = await fetch(API + '/api/auth/me/avatar', {
+        method: 'POST',
+        headers: {Authorization: 'Bearer ' + getToken()},
+        body: formData,
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok){
+        throw new Error(typeof data.detail === 'string' ? data.detail : '上传失败');
+      }
+      localStorage.setItem('mexyz_user', JSON.stringify(data));
+      setAvatarDisplay(data.avatar_url);
+      showToast('头像已更新', 'success', 3000);
+    }catch(err){
+      showToast(err.message || '上传失败，请重试', 'error', 4000);
+    }
+  });
 
   document.getElementById('profileReonboardBtn').addEventListener('click', ()=>{
     openOnboarding('modal');

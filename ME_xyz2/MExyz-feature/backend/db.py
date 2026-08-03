@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT,
   nickname TEXT,
+  avatar_url TEXT,
   email_verified INTEGER NOT NULL DEFAULT 0,
   oauth_provider TEXT,
   oauth_sub TEXT,
@@ -143,6 +144,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
         "email_verified": "INTEGER NOT NULL DEFAULT 0",
         "oauth_provider": "TEXT",
         "oauth_sub": "TEXT",
+        "avatar_url": "TEXT",
     }
     for name, sql_type in user_additions.items():
         if name not in user_cols:
