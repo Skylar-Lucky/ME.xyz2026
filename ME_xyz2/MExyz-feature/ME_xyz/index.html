@@ -205,18 +205,26 @@
   .btn-outline:hover{border-color:var(--ink); background:var(--ink); color:#fff;}
 
   /* ---------- 内测反馈悬浮组件 ---------- */
-  .beta-widget{position:fixed; bottom:24px; right:24px; z-index:9999; font-family:var(--font-body);}
+  .beta-widget{
+    position:fixed; z-index:9999; font-family:var(--font-body); touch-action:none; cursor:grab;
+  }
+  .beta-widget--dragging{cursor:grabbing;}
+  .beta-widget--snapping{transition:left .22s ease, top .22s ease;}
   .beta-widget__card{
     position:relative; width:320px; max-width:calc(100vw - 40px);
     background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-xl);
     padding:var(--space-md) var(--space-md) var(--space-base); box-shadow:0 8px 24px rgba(12,10,9,.12); box-sizing:border-box;
+  }
+  .beta-widget__drag-handle{
+    position:absolute; top:8px; left:50%; transform:translateX(-50%); width:36px; height:4px;
+    border-radius:var(--radius-pill); background:var(--hairline-strong);
   }
   .beta-widget__close{
     position:absolute; top:14px; right:14px; border:none; background:transparent; cursor:pointer;
     padding:4px; color:var(--muted-soft); font-size:16px; line-height:1; transition:color .15s ease;
   }
   .beta-widget__close:hover{color:var(--ink);}
-  .beta-widget__header{display:flex; align-items:center; gap:10px; margin-bottom:var(--space-xs); padding-right:20px;}
+  .beta-widget__header{display:flex; align-items:center; gap:10px; margin:6px 0 var(--space-xs); padding-right:20px;}
   .beta-widget__icon{flex-shrink:0; font-size:20px; color:var(--ink);}
   .beta-widget__title{font-family:var(--font-display); font-size:15px; font-weight:500; line-height:1.5; color:var(--ink); margin:0;}
   .beta-widget__desc{font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 var(--space-base);}
@@ -229,7 +237,7 @@
   .beta-widget__bubble{
     display:none; align-items:center; justify-content:center; width:44px; height:44px;
     border-radius:var(--radius-pill); background:var(--surface-card); border:1px solid var(--hairline);
-    box-shadow:0 8px 24px rgba(12,10,9,.12); cursor:pointer; padding:0; font-size:20px;
+    box-shadow:0 8px 24px rgba(12,10,9,.12); cursor:grab; padding:0; font-size:20px;
   }
   .beta-widget--collapsed .beta-widget__card{display:none;}
   .beta-widget--collapsed .beta-widget__bubble{display:flex;}
@@ -326,8 +334,8 @@
   .team-tag{
     font-size:14px; font-weight:500; color:var(--ink-soft); background:var(--surface-strong);
     border:1px solid var(--hairline); padding:6px 13px; border-radius:var(--radius-pill); transition:all .15s ease;
-    white-space:nowrap;
   }
+  .team-tag-group .team-tag{white-space:nowrap;}
   a.team-tag:hover{border-color:var(--ink); background:#fff; color:var(--ink);}
 
   .team-role-tag{
@@ -908,7 +916,6 @@
       <div class="chat-body" id="chatBody">
         <div class="role-card-row" id="roleCardRow"></div>
         <button class="demo-trigger" id="revealBtn"><i class="ph ph-sparkle"></i> 生成"未来的自己"</button>
-        <button class="demo-trigger" id="organizeMemoryBtn" type="button"><i class="ph ph-brain"></i> 整理记忆</button>
       </div>
 
       <div class="chat-input-bar">
@@ -1565,6 +1572,7 @@
 <!-- 内测反馈悬浮组件（记忆图谱产品页 memory-map/ 除外） -->
 <div class="beta-widget" id="betaWidget">
   <div class="beta-widget__card" id="betaWidgetCard">
+    <span class="beta-widget__drag-handle" aria-hidden="true"></span>
     <button class="beta-widget__close" id="betaWidgetClose" aria-label="收起">×</button>
     <div class="beta-widget__header">
       <span class="beta-widget__icon" aria-hidden="true"><i class="ph ph-chat-circle-text"></i></span>
@@ -2131,7 +2139,6 @@
   const roleHistory = document.getElementById('roleHistory');
   const mainHistory = document.getElementById('mainHistory');
   const revealBtn = document.getElementById('revealBtn');
-  const organizeMemoryBtn = document.getElementById('organizeMemoryBtn');
   const chatBody = document.getElementById('chatBody');
   const chatInput = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -2837,33 +2844,6 @@
     }
   });
 
-  organizeMemoryBtn.addEventListener('click', async ()=>{
-    if(chatBusy){ showToast('正在处理上一个操作，请稍候…', 'info', 2000); return; }
-    chatBusy = true;
-    organizeMemoryBtn.disabled = true;
-    const prev = organizeMemoryBtn.innerHTML;
-    organizeMemoryBtn.innerHTML = '<i class="ph ph-spinner"></i> 整理中…';
-    try{
-      const data = await api('/api/memory/organize', {
-        method: 'POST',
-        body: JSON.stringify({session_id: currentSessionId()}),
-      });
-      const nC = (data.created || []).length;
-      const nM = (data.merged || []).length;
-      if(nC + nM > 0){
-        showToast(`✓ 整理完成：新增 ${nC}，合并 ${nM}，已同步到脑图`, 'success', 4000);
-      }else{
-        showToast('整理完成，本次没有新的事件', 'info', 3500);
-      }
-    }catch(err){
-      showToast('整理失败：' + (err.message || String(err)), 'error', 5000);
-    }finally{
-      organizeMemoryBtn.innerHTML = prev;
-      organizeMemoryBtn.disabled = false;
-      chatBusy = false;
-    }
-  });
-
   async function bootChatIfNeeded(){
     if(!getLoggedIn()) return;
     if(chatBooted){
@@ -2922,6 +2902,11 @@
   // ---------- 内测反馈悬浮组件 ----------
   (function initBetaWidget(){
     var STORAGE_KEY = 'betaWidgetCollapsedDate';
+    var POS_KEY = 'betaWidgetPos';
+    var EDGE_MARGIN = 16;
+    var TOP_SAFE = 84; // 顶部导航栏高度 + 间距，避免拖到导航栏后面
+    var DRAG_THRESHOLD = 6;
+
     var widget = document.getElementById('betaWidget');
     var closeBtn = document.getElementById('betaWidgetClose');
     var bubble = document.getElementById('betaWidgetBubble');
@@ -2955,7 +2940,126 @@
     } catch(e){}
 
     closeBtn.addEventListener('click', function(){ collapse(true); });
-    bubble.addEventListener('click', function(){ expand(); });
+
+    // ---------- 拖拽至页面任意边框位置 ----------
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function clampPosition(left, top){
+      var w = widget.offsetWidth, h = widget.offsetHeight;
+      var maxLeft = window.innerWidth - w - EDGE_MARGIN;
+      var maxTop = window.innerHeight - h - EDGE_MARGIN;
+      return {
+        left: clamp(left, EDGE_MARGIN, Math.max(EDGE_MARGIN, maxLeft)),
+        top: clamp(top, TOP_SAFE, Math.max(TOP_SAFE, maxTop)),
+      };
+    }
+
+    function applyPosition(pos){
+      widget.style.left = pos.left + 'px';
+      widget.style.top = pos.top + 'px';
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+    }
+
+    function snapToNearestEdge(left, top){
+      var w = widget.offsetWidth, h = widget.offsetHeight;
+      var distLeft = left;
+      var distRight = window.innerWidth - (left + w);
+      var distTop = top - TOP_SAFE;
+      var distBottom = window.innerHeight - (top + h);
+      var min = Math.min(distLeft, distRight, distTop, distBottom);
+      if(min === distLeft) left = EDGE_MARGIN;
+      else if(min === distRight) left = window.innerWidth - w - EDGE_MARGIN;
+      else if(min === distTop) top = TOP_SAFE;
+      else top = window.innerHeight - h - EDGE_MARGIN;
+      return clampPosition(left, top);
+    }
+
+    function savePosition(pos){
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch(e){}
+    }
+
+    function loadPosition(){
+      try {
+        var raw = localStorage.getItem(POS_KEY);
+        if(!raw) return null;
+        var pos = JSON.parse(raw);
+        if(typeof pos.left === 'number' && typeof pos.top === 'number') return pos;
+      } catch(e){}
+      return null;
+    }
+
+    function defaultPosition(){
+      // 默认贴右边、垂直居中偏上，避开主聊天输入框的发送按钮
+      var w = widget.offsetWidth || 320, h = widget.offsetHeight || 56;
+      return clampPosition(
+        window.innerWidth - w - 24,
+        Math.min(window.innerHeight * 0.45, window.innerHeight - h - 24)
+      );
+    }
+
+    function initPosition(){
+      var stored = loadPosition();
+      applyPosition(stored ? clampPosition(stored.left, stored.top) : defaultPosition());
+    }
+
+    initPosition();
+    window.addEventListener('resize', function(){
+      var rect = widget.getBoundingClientRect();
+      applyPosition(clampPosition(rect.left, rect.top));
+    });
+
+    var dragging = false, dragMoved = false;
+    var pointerId = null, offsetX = 0, offsetY = 0, startClientX = 0, startClientY = 0, pressTarget = null;
+
+    function onPointerMove(e){
+      if(!dragging || e.pointerId !== pointerId) return;
+      if(!dragMoved){
+        var traveled = Math.abs(e.clientX - startClientX) + Math.abs(e.clientY - startClientY);
+        if(traveled < DRAG_THRESHOLD) return;
+        dragMoved = true;
+        widget.classList.add('beta-widget--dragging');
+        widget.classList.remove('beta-widget--snapping');
+      }
+      applyPosition(clampPosition(e.clientX - offsetX, e.clientY - offsetY));
+    }
+
+    function onPointerUp(e){
+      if(e.pointerId !== pointerId) return;
+      try { widget.releasePointerCapture(pointerId); } catch(err){}
+      widget.removeEventListener('pointermove', onPointerMove);
+      widget.removeEventListener('pointerup', onPointerUp);
+      widget.removeEventListener('pointercancel', onPointerUp);
+      dragging = false;
+      widget.classList.remove('beta-widget--dragging');
+      if(dragMoved){
+        var rect = widget.getBoundingClientRect();
+        var snapped = snapToNearestEdge(rect.left, rect.top);
+        widget.classList.add('beta-widget--snapping');
+        applyPosition(snapped);
+        savePosition(snapped);
+        setTimeout(function(){ widget.classList.remove('beta-widget--snapping'); }, 260);
+      }else if(pressTarget && pressTarget.closest && pressTarget.closest('#betaWidgetBubble')){
+        expand();
+      }
+    }
+
+    widget.addEventListener('pointerdown', function(e){
+      if(e.target.closest('#betaWidgetLink, #betaWidgetClose')) return;
+      dragging = true;
+      dragMoved = false;
+      pointerId = e.pointerId;
+      pressTarget = e.target;
+      startClientX = e.clientX;
+      startClientY = e.clientY;
+      var rect = widget.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      try { widget.setPointerCapture(pointerId); } catch(err){}
+      widget.addEventListener('pointermove', onPointerMove);
+      widget.addEventListener('pointerup', onPointerUp);
+      widget.addEventListener('pointercancel', onPointerUp);
+    });
   })();
 </script>
 </body>
