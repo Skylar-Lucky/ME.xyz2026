@@ -762,6 +762,50 @@
   .profile-danger-zone h4{color:var(--error); font-size:15px; font-weight:600; margin-bottom:6px;}
   .profile-danger-zone p{font-size:13.5px; color:var(--muted); margin-bottom:var(--space-base); line-height:1.6;}
 
+  /* ---------- 状态角标（BYOK 等状态展示复用） ---------- */
+  .status-pill{display:inline-flex; align-items:center; padding:3px 10px; border-radius:var(--radius-pill); font-size:12.5px; font-weight:500; white-space:nowrap;}
+  .status-pill.neutral{background:var(--surface-strong); color:var(--muted-soft);}
+  .status-pill.ok{background:#e7f5ec; color:var(--success);}
+  .status-pill.err{background:#fce8e8; color:var(--error);}
+
+  /* ---------- AI模型接入（BYOK） ---------- */
+  #view-byok{overflow-y:auto;}
+  .byok-scroll{max-width:680px; margin:0 auto; width:100%; padding:var(--space-xxl) var(--space-xl) 80px;}
+  .byok-intro{font-size:14.5px; color:var(--muted); line-height:1.7; margin-bottom:var(--space-xl);}
+  .byok-empty{
+    border:1.5px dashed var(--hairline-strong); border-radius:var(--radius-xl); padding:var(--space-xl);
+    text-align:center; color:var(--muted); font-size:14.5px; margin-bottom:var(--space-lg);
+  }
+  .byok-key-row{
+    display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--hairline);
+    position:relative;
+  }
+  .byok-key-row:last-child{border-bottom:none;}
+  .byok-key-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--muted-soft);}
+  .byok-key-dot.ok{background:var(--success);}
+  .byok-key-dot.err{background:var(--error);}
+  .byok-key-main{flex:1; min-width:0;}
+  .byok-key-name{font-size:15px; font-weight:500; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .byok-key-sub{font-size:13px; color:var(--muted-soft); margin-top:2px; font-family:var(--font-display);}
+  .byok-menu-btn{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:18px; flex-shrink:0;}
+  .byok-menu-btn:hover{background:var(--surface-strong); color:var(--ink);}
+  .byok-menu{
+    position:fixed; z-index:200; min-width:150px;
+    background:var(--surface-card); border:1px solid var(--hairline); border-radius:var(--radius-lg);
+    box-shadow:0 8px 24px rgba(12,10,9,.12); padding:6px; display:none;
+  }
+  .byok-menu.show{display:block;}
+  .byok-menu button{display:block; width:100%; text-align:left; padding:9px 12px; border-radius:var(--radius-md); font-size:14px; color:var(--ink-soft);}
+  .byok-menu button:hover{background:var(--surface-strong);}
+  .byok-menu button.danger{color:var(--error);}
+  .byok-mode-block{
+    margin-top:var(--space-xxl); padding-top:var(--space-xl); border-top:1px solid var(--hairline);
+  }
+  .byok-mode-label{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:var(--space-sm);}
+  .byok-mode-current{font-size:14.5px; color:var(--body); margin-bottom:var(--space-base);}
+  .byok-field-conditional{display:none;}
+  .byok-field-conditional.show{display:block;}
+
   @media (max-width:860px){
     .feature-card{width:78vw;}
     .chat-sidebar{width:200px;}
@@ -1019,6 +1063,13 @@
               <span class="profile-row-val" id="profileEmailVal">—</span>
             </div>
           </div>
+          <div class="profile-row clickable" id="profileByokRow" data-view="byok">
+            <div class="profile-row-left"><i class="ph ph-key"></i>AI模型接入</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="status-pill neutral" id="profileByokStatus">未接入</span>
+              <i class="ph ph-caret-right chev"></i>
+            </div>
+          </div>
           <div class="profile-row clickable" id="profileSecurityRow">
             <div class="profile-row-left"><i class="ph ph-lock-simple"></i>账号与安全</div>
             <i class="ph ph-caret-right chev"></i>
@@ -1037,6 +1088,29 @@
             <div class="profile-row-left"><i class="ph ph-question"></i>帮助与反馈</div>
             <span class="oauth-badge">即将推出</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI模型接入（BYOK） -->
+  <div class="view" id="view-byok">
+    <div class="byok-scroll">
+      <button class="tt-back" data-view="profile" type="button"><i class="ph ph-arrow-left"></i> 我的</button>
+      <h2 style="font-family:var(--font-display); font-weight:400; font-size:26.5px; margin-bottom:var(--space-sm);">AI模型接入</h2>
+      <p class="byok-intro">接入你自己的模型账号，使用你的 Key 直接调用，不占用平台额度，费用由对应平台按官方价格结算。</p>
+
+      <div class="byok-empty" id="byokEmptyState" style="display:none;">还没有接入任何模型账号</div>
+      <div class="profile-list" id="byokKeyList" style="display:none; margin-bottom:var(--space-lg);"></div>
+
+      <button class="btn-outline btn-sm" id="byokAddKeyBtn" type="button"><i class="ph ph-plus"></i> 添加模型账号</button>
+
+      <div class="byok-mode-block">
+        <div class="byok-mode-label">当前使用</div>
+        <div class="byok-mode-current" id="byokModeCurrent">平台默认模型</div>
+        <div class="story-tabs" id="byokModeToggle">
+          <button class="story-tab-btn" data-mode="platform" type="button">平台默认模型</button>
+          <button class="story-tab-btn" data-mode="byok" type="button">我的模型</button>
         </div>
       </div>
     </div>
@@ -1478,6 +1552,69 @@
   </div>
 </div>
 
+<!-- AI模型接入 · 添加模型账号弹窗 -->
+<div class="modal-overlay" id="byokAddModalOverlay">
+  <div class="modal-panel profile-modal-panel" style="width:440px;">
+    <button class="modal-close" id="byokAddModalClose"><i class="ph ph-x"></i></button>
+    <h3 class="profile-modal-title" id="byokAddModalTitle">添加模型账号</h3>
+    <form id="byokAddForm">
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">选择供应商</span></div>
+        <div class="field-input-wrap">
+          <select class="field-input" id="byokProviderSelect"></select>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">API Key</span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="password" id="byokApiKeyInput" placeholder="粘贴你的 API Key" autocomplete="off">
+          <i class="ph ph-eye field-eye" id="byokKeyEye"></i>
+        </div>
+      </div>
+      <div class="field-group byok-field-conditional" id="byokModelIdGroup">
+        <div class="field-label-row"><span class="field-label">接入点 / 模型 ID</span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="text" id="byokModelIdInput" placeholder="例如：ep-2026xxxxxx-xxxxx" autocomplete="off">
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label-row"><span class="field-label">备注名称 <span class="field-hint">可选</span></span></div>
+        <div class="field-input-wrap">
+          <input class="field-input" type="text" id="byokAliasInput" placeholder="例如：公司账号" maxlength="24">
+        </div>
+      </div>
+      <p style="margin:-8px 0 var(--space-base);">
+        <a id="byokDocLink" href="#" target="_blank" rel="noopener" style="font-size:13.5px; color:var(--muted); text-decoration:underline;">
+          如何获取 API Key？
+        </a>
+      </p>
+      <p class="field-error" id="byokAddError"></p>
+      <button class="btn-submit" id="byokAddSubmit" type="submit">测试并保存</button>
+    </form>
+  </div>
+</div>
+
+<!-- AI模型接入 · 删除确认弹窗 -->
+<div class="modal-overlay" id="byokDeleteConfirmOverlay">
+  <div class="modal-panel profile-modal-panel" style="width:380px;">
+    <button class="modal-close" id="byokDeleteConfirmClose"><i class="ph ph-x"></i></button>
+    <h3 class="profile-modal-title">删除模型账号</h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.7; margin-bottom:var(--space-lg);">
+      删除后无法恢复，需要重新添加 Key 才能再次使用。确认删除
+      <strong id="byokDeleteTargetName" style="color:var(--ink);"></strong> 吗？
+    </p>
+    <button class="btn-danger" id="byokDeleteConfirmBtn" type="button">确认删除</button>
+  </div>
+</div>
+
+<!-- AI模型接入 · Key 操作菜单（全局单例，position:fixed，避免被列表容器裁切） -->
+<div class="byok-menu" id="byokGlobalMenu">
+  <button type="button" data-action="activate">设为使用中</button>
+  <button type="button" data-action="edit">编辑</button>
+  <button type="button" data-action="verify">测试连接</button>
+  <button type="button" class="danger" data-action="delete">删除</button>
+</div>
+
 <!-- 前置提问 · 共享内容（在两种容器间移动） -->
 <div id="onbContent" style="display:none;">
   <!-- Step 1：基础信息收集 -->
@@ -1612,6 +1749,9 @@
     }
     if(name === 'profile' && typeof loadProfileView === 'function'){
       loadProfileView();
+    }
+    if(name === 'byok' && typeof loadByokView === 'function'){
+      loadByokView();
     }
   }
   document.querySelectorAll('[data-view]').forEach(el=>{
@@ -2266,6 +2406,7 @@
           ? `已完成前置问题 · 生成 ${personaCount} 个未来角色`
           : `还没有完成前置问题 · 生成 ${personaCount} 个未来角色`;
       }
+      if(typeof refreshByokBadge === 'function') refreshByokBadge();
     }catch(err){
       // 拉取失败时保留已有展示，不打断页面
     }
@@ -2348,6 +2489,323 @@
       showToast(err.message || '更新失败', 'error', 4000);
     }finally{
       submitBtn.disabled = false;
+    }
+  });
+
+  // ---------- 我的 · AI模型接入（BYOK） ----------
+  let byokProvidersCache = null;
+  let byokKeysCache = [];
+  let byokEditingKeyId = null;
+  let byokDeleteTargetId = null;
+  let byokOpenMenuId = null;
+
+  async function byokLoadProviders(){
+    if(byokProvidersCache) return byokProvidersCache;
+    const data = await api('/api/providers');
+    byokProvidersCache = Array.isArray(data) ? data : [];
+    return byokProvidersCache;
+  }
+
+  function byokStatusPillHtml(keys, mode){
+    const current = keys.find(k=>k.is_current);
+    if(mode === 'byok' && current && current.status === 'active'){
+      return {cls: 'ok', text: `使用中·${current.provider_display_name}`};
+    }
+    if(keys.some(k=>k.status === 'invalid')){
+      return {cls: 'err', text: '异常'};
+    }
+    if(keys.length === 0){
+      return {cls: 'neutral', text: '未接入'};
+    }
+    return {cls: 'neutral', text: '未启用'};
+  }
+
+  async function refreshByokBadge(){
+    const badge = document.getElementById('profileByokStatus');
+    if(!badge || !getLoggedIn()) return;
+    try{
+      const [keysRes, prefRes] = await Promise.all([
+        api('/api/user/model-keys'),
+        api('/api/user/model-preference'),
+      ]);
+      const pill = byokStatusPillHtml(keysRes.keys || [], prefRes.mode);
+      badge.className = 'status-pill ' + pill.cls;
+      badge.textContent = pill.text;
+    }catch(err){
+      // 拉取失败时保留上次展示
+    }
+  }
+
+  async function loadByokView(){
+    if(!getLoggedIn()){ goto('login'); return; }
+    const listEl = document.getElementById('byokKeyList');
+    const emptyEl = document.getElementById('byokEmptyState');
+    try{
+      const [providersData, keysRes, prefRes] = await Promise.all([
+        byokLoadProviders(),
+        api('/api/user/model-keys'),
+        api('/api/user/model-preference'),
+      ]);
+      byokKeysCache = keysRes.keys || [];
+      renderByokKeyList(byokKeysCache);
+      updateByokModeUI(prefRes.mode, byokKeysCache);
+      const pill = byokStatusPillHtml(byokKeysCache, prefRes.mode);
+      const badge = document.getElementById('profileByokStatus');
+      if(badge){ badge.className = 'status-pill ' + pill.cls; badge.textContent = pill.text; }
+    }catch(err){
+      showToast(err.message || '加载失败', 'error', 4000);
+    }
+  }
+
+  function updateByokModeUI(mode, keys){
+    document.querySelectorAll('#byokModeToggle .story-tab-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    const current = keys.find(k=>k.is_current);
+    const currentEl = document.getElementById('byokModeCurrent');
+    if(mode === 'byok' && current){
+      currentEl.textContent = `我的模型 · ${current.provider_display_name}${current.alias ? '（' + current.alias + '）' : ''}`;
+    }else if(mode === 'byok'){
+      currentEl.textContent = '我的模型（尚未选择一个使用中的账号）';
+    }else{
+      currentEl.textContent = '平台默认模型';
+    }
+  }
+
+  function byokMaskedKey(last4){
+    return 'sk-****************' + (last4 || '');
+  }
+
+  function renderByokKeyList(keys){
+    const listEl = document.getElementById('byokKeyList');
+    const emptyEl = document.getElementById('byokEmptyState');
+    if(!keys.length){
+      listEl.style.display = 'none';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.style.display = 'block';
+    listEl.innerHTML = keys.map(k=>{
+      const dotCls = k.status === 'invalid' ? 'err' : (k.is_current ? 'ok' : '');
+      const statusText = k.status === 'invalid' ? '异常' : (k.is_current ? '使用中' : '未启用');
+      return `
+        <div class="byok-key-row" data-key-id="${k.id}">
+          <span class="byok-key-dot ${dotCls}"></span>
+          <div class="byok-key-main">
+            <div class="byok-key-name">${k.provider_display_name}${k.alias ? `<span style="color:var(--muted-soft); font-weight:400; font-size:13px;">（${k.alias}）</span>` : ''}<span class="status-pill ${k.status === 'invalid' ? 'err' : (k.is_current ? 'ok' : 'neutral')}" style="margin-left:4px;">${statusText}</span></div>
+            <div class="byok-key-sub">${byokMaskedKey(k.key_last4)}</div>
+          </div>
+          <button class="byok-menu-btn" type="button" data-menu-toggle="${k.id}"><i class="ph ph-dots-three-vertical"></i></button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const byokGlobalMenu = document.getElementById('byokGlobalMenu');
+
+  function closeByokMenu(){
+    byokGlobalMenu.classList.remove('show');
+    byokOpenMenuId = null;
+  }
+
+  document.getElementById('byokKeyList').addEventListener('click', (e)=>{
+    const menuToggle = e.target.closest('[data-menu-toggle]');
+    if(!menuToggle) return;
+    const id = menuToggle.dataset.menuToggle;
+    const wasOpen = byokOpenMenuId === id;
+    closeByokMenu();
+    if(wasOpen) return;
+
+    const key = byokKeysCache.find(k=>k.id === id);
+    const activateBtn = byokGlobalMenu.querySelector('[data-action="activate"]');
+    const disable = !key || key.is_current || key.status === 'invalid';
+    activateBtn.disabled = disable;
+    activateBtn.style.opacity = disable ? '.4' : '';
+
+    const rect = menuToggle.getBoundingClientRect();
+    byokGlobalMenu.style.top = (rect.bottom + 6) + 'px';
+    byokGlobalMenu.style.left = (rect.right - byokGlobalMenu.offsetWidth) + 'px';
+    byokGlobalMenu.dataset.targetKeyId = id;
+    byokGlobalMenu.classList.add('show');
+    byokOpenMenuId = id;
+  });
+
+  byokGlobalMenu.addEventListener('click', async (e)=>{
+    const actionBtn = e.target.closest('[data-action]');
+    if(!actionBtn || actionBtn.disabled) return;
+    const action = actionBtn.dataset.action;
+    const keyId = byokGlobalMenu.dataset.targetKeyId;
+    const key = byokKeysCache.find(k=>k.id === keyId);
+    closeByokMenu();
+    if(action === 'activate'){
+      try{
+        await api(`/api/user/model-keys/${keyId}/activate`, {method: 'POST'});
+        showToast('已设为使用中', 'success', 3000);
+        await loadByokView();
+      }catch(err){ showToast(err.message || '操作失败', 'error', 4000); }
+    }else if(action === 'verify'){
+      try{
+        await api(`/api/user/model-keys/${keyId}/verify`, {method: 'POST'});
+        showToast('连接正常', 'success', 3000);
+        await loadByokView();
+      }catch(err){
+        showToast(err.message || '连接测试失败', 'error', 4000);
+        await loadByokView();
+      }
+    }else if(action === 'edit'){
+      openByokAddModal(key);
+    }else if(action === 'delete'){
+      byokDeleteTargetId = keyId;
+      document.getElementById('byokDeleteTargetName').textContent =
+        key ? `${key.provider_display_name}${key.alias ? '（' + key.alias + '）' : ''}` : '';
+      document.getElementById('byokDeleteConfirmOverlay').classList.add('show');
+    }
+  });
+
+  document.addEventListener('click', (e)=>{
+    if(byokOpenMenuId && !e.target.closest('.byok-menu') && !e.target.closest('[data-menu-toggle]')){
+      closeByokMenu();
+    }
+  });
+  window.addEventListener('resize', closeByokMenu);
+
+  // ---------- 添加/编辑模型账号弹窗 ----------
+  const byokAddModalOverlay = document.getElementById('byokAddModalOverlay');
+  const byokProviderSelect = document.getElementById('byokProviderSelect');
+  const byokApiKeyInput = document.getElementById('byokApiKeyInput');
+  const byokAliasInput = document.getElementById('byokAliasInput');
+  const byokModelIdInput = document.getElementById('byokModelIdInput');
+  const byokModelIdGroup = document.getElementById('byokModelIdGroup');
+  const byokDocLink = document.getElementById('byokDocLink');
+  const byokAddForm = document.getElementById('byokAddForm');
+  const byokAddError = document.getElementById('byokAddError');
+  const byokAddSubmit = document.getElementById('byokAddSubmit');
+
+  function byokUpdateConditionalFields(){
+    const opt = byokProvidersCache.find(p=>p.provider_key === byokProviderSelect.value);
+    if(!opt) return;
+    byokModelIdGroup.classList.toggle('show', !!opt.needs_model_id);
+    byokDocLink.href = opt.doc_url || '#';
+  }
+
+  byokProviderSelect.addEventListener('change', byokUpdateConditionalFields);
+
+  async function openByokAddModal(editingKey){
+    await byokLoadProviders();
+    byokAddError.classList.remove('show');
+    byokAddError.textContent = '';
+    byokEditingKeyId = editingKey ? editingKey.id : null;
+    document.getElementById('byokAddModalTitle').textContent = editingKey ? '编辑模型账号' : '添加模型账号';
+    byokProviderSelect.innerHTML = byokProvidersCache.map(p=>
+      `<option value="${p.provider_key}">${p.display_name}</option>`
+    ).join('');
+    byokApiKeyInput.value = '';
+    byokApiKeyInput.placeholder = editingKey ? '留空则保留原有 Key' : '粘贴你的 API Key';
+    byokAliasInput.value = editingKey ? (editingKey.alias || '') : '';
+    byokModelIdInput.value = '';
+    if(editingKey){
+      byokProviderSelect.value = editingKey.provider_key;
+      byokProviderSelect.disabled = true;
+    }else{
+      byokProviderSelect.disabled = false;
+    }
+    byokUpdateConditionalFields();
+    byokAddModalOverlay.classList.add('show');
+  }
+
+  document.getElementById('byokAddKeyBtn').addEventListener('click', ()=> openByokAddModal(null));
+  document.getElementById('byokAddModalClose').addEventListener('click', ()=>{
+    byokAddModalOverlay.classList.remove('show');
+  });
+
+  const byokKeyEye = document.getElementById('byokKeyEye');
+  byokKeyEye.addEventListener('click', ()=>{
+    const showing = byokApiKeyInput.type === 'password';
+    byokApiKeyInput.type = showing ? 'text' : 'password';
+    byokKeyEye.classList.toggle('ph-eye', !showing);
+    byokKeyEye.classList.toggle('ph-eye-slash', showing);
+  });
+
+  byokAddForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    byokAddError.classList.remove('show');
+    const apiKey = byokApiKeyInput.value.trim();
+    if(!byokEditingKeyId && !apiKey){
+      byokAddError.textContent = '请输入 API Key';
+      byokAddError.classList.add('show');
+      return;
+    }
+    byokAddSubmit.disabled = true;
+    const prevText = byokAddSubmit.textContent;
+    byokAddSubmit.textContent = '测试中…';
+    try{
+      if(byokEditingKeyId){
+        await api(`/api/user/model-keys/${byokEditingKeyId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            api_key: apiKey || null,
+            alias: byokAliasInput.value.trim() || null,
+            model_id: byokModelIdInput.value.trim() || null,
+          }),
+        });
+      }else{
+        await api('/api/user/model-keys', {
+          method: 'POST',
+          body: JSON.stringify({
+            provider_key: byokProviderSelect.value,
+            api_key: apiKey,
+            alias: byokAliasInput.value.trim() || null,
+            model_id: byokModelIdInput.value.trim() || null,
+          }),
+        });
+      }
+      byokAddModalOverlay.classList.remove('show');
+      showToast('接入成功', 'success', 3000);
+      await loadByokView();
+    }catch(err){
+      byokAddError.textContent = err.message || '保存失败，请重试';
+      byokAddError.classList.add('show');
+    }finally{
+      byokAddSubmit.disabled = false;
+      byokAddSubmit.textContent = prevText;
+    }
+  });
+
+  // ---------- 删除确认弹窗 ----------
+  const byokDeleteConfirmOverlay = document.getElementById('byokDeleteConfirmOverlay');
+  document.getElementById('byokDeleteConfirmClose').addEventListener('click', ()=>{
+    byokDeleteConfirmOverlay.classList.remove('show');
+  });
+  document.getElementById('byokDeleteConfirmBtn').addEventListener('click', async ()=>{
+    if(!byokDeleteTargetId) return;
+    const btn = document.getElementById('byokDeleteConfirmBtn');
+    btn.disabled = true;
+    try{
+      await api(`/api/user/model-keys/${byokDeleteTargetId}`, {method: 'DELETE'});
+      byokDeleteConfirmOverlay.classList.remove('show');
+      showToast('已删除', 'success', 3000);
+      await loadByokView();
+    }catch(err){
+      showToast(err.message || '删除失败', 'error', 4000);
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- 全局模式开关 ----------
+  document.getElementById('byokModeToggle').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('.story-tab-btn');
+    if(!btn) return;
+    const mode = btn.dataset.mode;
+    try{
+      await api('/api/user/model-preference', {method: 'PUT', body: JSON.stringify({mode})});
+      if(mode === 'byok' && !byokKeysCache.some(k=>k.is_current && k.status === 'active')){
+        showToast('已切换为"我的模型"，但你还没有选择一个使用中的账号，暂时仍会使用平台默认模型', 'info', 5000);
+      }
+      await loadByokView();
+    }catch(err){
+      showToast(err.message || '切换失败', 'error', 4000);
     }
   });
 
@@ -2664,6 +3122,7 @@
     });
     appendBubble('agent', data.reply);
     updateRevealBtn(data);
+    if(data.notice) showToast(data.notice, 'info', 6000);
     return data;
   }
 
@@ -2674,6 +3133,7 @@
       body: JSON.stringify({persona_id: personaId, message: text}),
     });
     appendBubble('agent', data.reply);
+    if(data.notice) showToast(data.notice, 'info', 6000);
     return data;
   }
 
@@ -2729,6 +3189,7 @@
       data.personas.forEach(p=>{ knownPersonas[p.id] = p; });
       showRevealBtn(false);
       renderPersonaCards(data.personas);
+      if(data.notice) showToast(data.notice, 'info', 6000);
       // do NOT add to role history until user picks one
       loadPersonasGallery();
     }catch(err){

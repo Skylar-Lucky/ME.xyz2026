@@ -70,7 +70,8 @@ def _relationship(
     return previous or origin, origin
 
 
-def organize_session(user_id: str, session_id: str) -> dict[str, Any]:
+def organize_session(user_id: str, session_id: str, chat_json_fn=None) -> dict[str, Any]:
+    chat_json_fn = chat_json_fn or chat_json
     session = store.find_session(user_id, session_id)
     if not session:
         raise ValueError("session not found")
@@ -114,7 +115,7 @@ def organize_session(user_id: str, session_id: str) -> dict[str, Any]:
         messages[-1]["id"],
     )
     try:
-        extracted = chat_json(
+        extracted = chat_json_fn(
             [
                 {
                     "role": "user",
@@ -177,7 +178,7 @@ def organize_session(user_id: str, session_id: str) -> dict[str, Any]:
 
         if similar:
             try:
-                decision = chat_json(
+                decision = chat_json_fn(
                     [
                         {
                             "role": "user",

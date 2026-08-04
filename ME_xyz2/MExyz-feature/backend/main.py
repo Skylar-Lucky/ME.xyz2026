@@ -12,15 +12,18 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 import auth
+import byok
 import conversation
 import memory_agent
 import prompt
+import providers
 import store
 from braingraph.api import router as memory_graph_router
 from braingraph.exporter import export_memory_events
 from db import init_db
 from llm_service import LLMError, chat, chat_json
 from models import (
+    AddModelKeyRequest,
     AuthRequest,
     AuthResponse,
     ChangePasswordRequest,
@@ -41,18 +44,24 @@ from models import (
     MindmapExtractRequest,
     MindmapExtractResponse,
     MindmapNode,
+    ModelKeyPublic,
+    ModelKeysListResponse,
+    ModelPreferenceResponse,
     OkResponse,
     OrganizeMemoryRequest,
     OrganizeMemoryResponse,
     PersonaFull,
     PersonaPublic,
     PersonasListResponse,
+    ProviderPublic,
     RegisterVerifyRequest,
     RoleChatRequest,
     RoleChatResponse,
     RoleSessionSummary,
     SessionDetailResponse,
     SessionsListResponse,
+    SetModelPreferenceRequest,
+    UpdateModelKeyRequest,
     UpdateProfileRequest,
     UserPublic,
 )
@@ -261,8 +270,16 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
             phase=phase,
         )
 
+    notice: str | None = None
+
+    def _chat_json_fn(messages, system=None, temperature=0.3):
+        nonlocal notice
+        result, n = byok.call_with_fallback(uid, "chat_json", messages, system=system, temperature=temperature)
+        notice = notice or n
+        return result
+
     try:
-        state = conversation.extract_conversation_state(msgs, prev_state)
+        state = conversation.extract_conversation_state(msgs, prev_state, chat_json_fn=_chat_json_fn)
     except Exception:
         state = conversation.merge_state(prev_state, {})
 
@@ -271,7 +288,8 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
     history = _history_for_llm(msgs)
 
     try:
-        reply = chat(history, system=system)
+        reply, n = byok.call_with_fallback(uid, "chat", history, system=system)
+        notice = notice or n
     except LLMError as e:
         store.delete_last_message(uid, sid)
         raise HTTPException(status_code=502, detail=str(e)) from e
@@ -281,7 +299,7 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
 
     # Re-extract after assistant reply for summary/future flags
     try:
-        state = conversation.extract_conversation_state(msgs, state)
+        state = conversation.extract_conversation_state(msgs, state, chat_json_fn=_chat_json_fn)
     except Exception:
         pass
 
@@ -306,6 +324,7 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
         ready_for_personas=gate.ready,
         turn_count=turn,
         phase=phase,
+        notice=notice,
     )
 
 
@@ -330,7 +349,9 @@ def api_generate_personas(
         ensure_ascii=False,
     )
     try:
-        result = chat_json(
+        result, notice = byok.call_with_fallback(
+            uid,
+            "chat_json",
             [
                 {
                     "role": "user",
@@ -378,6 +399,7 @@ def api_generate_personas(
         ready=True,
         gate_state=gate,
         personas=[PersonaFull(**s) for s in saved],
+        notice=notice,
     )
 
 
@@ -424,13 +446,13 @@ def api_role_chat(body: RoleChatRequest, user: dict = Depends(auth.get_current_u
     system = persona.get("system_prompt") or f"你是「{persona.get('title')}」，用户未来的一个版本。"
 
     try:
-        reply = chat(history, system=system)
+        reply, notice = byok.call_with_fallback(uid, "chat", history, system=system)
     except LLMError as e:
         store.delete_last_message(uid, sid)
         raise HTTPException(status_code=502, detail=str(e)) from e
 
     store.append_message(uid, sid, "assistant", reply)
-    return RoleChatResponse(session_id=sid, persona_id=body.persona_id, reply=reply)
+    return RoleChatResponse(session_id=sid, persona_id=body.persona_id, reply=reply, notice=notice)
 
 
 # ---------- Sessions ----------
@@ -540,8 +562,16 @@ def api_organize_memory(
     if not store.find_session(uid, body.session_id):
         logger.warning("memory.organize session not found user=%s session=%s", uid, body.session_id)
         raise HTTPException(status_code=404, detail="session not found")
+    organize_notice: str | None = None
+
+    def _organize_chat_json_fn(messages, system=None, temperature=0.3):
+        nonlocal organize_notice
+        result, n = byok.call_with_fallback(uid, "chat_json", messages, system=system, temperature=temperature)
+        organize_notice = organize_notice or n
+        return result
+
     try:
-        result = memory_agent.organize_session(uid, body.session_id)
+        result = memory_agent.organize_session(uid, body.session_id, chat_json_fn=_organize_chat_json_fn)
     except ValueError as e:
         logger.warning("memory.organize failed (session gone) user=%s session=%s: %s", uid, body.session_id, e)
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -581,7 +611,77 @@ def api_organize_memory(
             ],
             edges=mm.get("edges", []),
         ),
+        notice=organize_notice,
     )
+
+
+# ---------- BYOK (bring-your-own model key) ----------
+
+@app.get("/api/providers", response_model=list[ProviderPublic])
+def api_list_providers():
+    return [
+        ProviderPublic(
+            provider_key=key,
+            display_name=cfg["display_name"],
+            doc_url=cfg.get("doc_url"),
+            needs_model_id=cfg.get("needs_model_id", False),
+        )
+        for key, cfg in providers.PROVIDERS.items()
+    ]
+
+
+@app.get("/api/user/model-keys", response_model=ModelKeysListResponse)
+def api_list_model_keys(user: dict = Depends(auth.get_current_user)):
+    keys = [ModelKeyPublic(**k) for k in byok.list_keys(_uid(user))]
+    return ModelKeysListResponse(keys=keys)
+
+
+@app.post("/api/user/model-keys", response_model=ModelKeyPublic)
+def api_add_model_key(body: AddModelKeyRequest, user: dict = Depends(auth.get_current_user)):
+    result = byok.add_key(_uid(user), body.provider_key, body.api_key, body.alias, body.model_id)
+    return ModelKeyPublic(**result)
+
+
+@app.put("/api/user/model-keys/{key_id}", response_model=ModelKeyPublic)
+def api_update_model_key(
+    key_id: str,
+    body: UpdateModelKeyRequest,
+    user: dict = Depends(auth.get_current_user),
+):
+    result = byok.update_key(_uid(user), key_id, body.api_key, body.alias, body.model_id)
+    return ModelKeyPublic(**result)
+
+
+@app.delete("/api/user/model-keys/{key_id}", response_model=OkResponse)
+def api_delete_model_key(key_id: str, user: dict = Depends(auth.get_current_user)):
+    byok.delete_key(_uid(user), key_id)
+    return OkResponse()
+
+
+@app.post("/api/user/model-keys/{key_id}/verify", response_model=ModelKeyPublic)
+def api_verify_model_key(key_id: str, user: dict = Depends(auth.get_current_user)):
+    result = byok.verify_key(_uid(user), key_id)
+    return ModelKeyPublic(**result)
+
+
+@app.post("/api/user/model-keys/{key_id}/activate", response_model=ModelKeyPublic)
+def api_activate_model_key(key_id: str, user: dict = Depends(auth.get_current_user)):
+    result = byok.set_current(_uid(user), key_id)
+    return ModelKeyPublic(**result)
+
+
+@app.get("/api/user/model-preference", response_model=ModelPreferenceResponse)
+def api_get_model_preference(user: dict = Depends(auth.get_current_user)):
+    return ModelPreferenceResponse(mode=byok.get_preference(_uid(user)))
+
+
+@app.put("/api/user/model-preference", response_model=ModelPreferenceResponse)
+def api_set_model_preference(
+    body: SetModelPreferenceRequest,
+    user: dict = Depends(auth.get_current_user),
+):
+    mode = byok.set_preference(_uid(user), body.mode)
+    return ModelPreferenceResponse(mode=mode)
 
 
 # ---------- Mindmap ----------

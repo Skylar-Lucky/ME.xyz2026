@@ -130,13 +130,18 @@ def merge_state(prev: dict | None, extracted: dict) -> dict[str, Any]:
     return base
 
 
-def extract_conversation_state(messages: list[dict], prev_state: dict | None) -> dict[str, Any]:
+def extract_conversation_state(
+    messages: list[dict],
+    prev_state: dict | None,
+    chat_json_fn=None,
+) -> dict[str, Any]:
     """LLM extract + merge; on failure return prev or empty."""
+    chat_json_fn = chat_json_fn or chat_json
     window = messages[-8:]
     transcript = "\n".join(f"{m['role']}: {m['content']}" for m in window)
     prev_json = json.dumps(prev_state or empty_state(), ensure_ascii=False)
     try:
-        result = chat_json(
+        result = chat_json_fn(
             [
                 {
                     "role": "user",

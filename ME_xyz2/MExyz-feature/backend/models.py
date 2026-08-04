@@ -53,6 +53,7 @@ class ChatResponse(BaseModel):
     ready_for_personas: bool
     turn_count: int = 0
     phase: str = "contain"
+    notice: Optional[str] = None
 
 
 # ---------- Personas ----------
@@ -65,6 +66,7 @@ class GeneratePersonasResponse(BaseModel):
     ready: bool
     gate_state: GateState
     personas: list[PersonaFull] = []
+    notice: Optional[str] = None
 
 
 class PersonasListResponse(BaseModel):
@@ -82,6 +84,7 @@ class RoleChatResponse(BaseModel):
     session_id: str
     persona_id: str
     reply: str
+    notice: Optional[str] = None
 
 
 class EnsureRoleSessionRequest(BaseModel):
@@ -219,6 +222,51 @@ class OkResponse(BaseModel):
     ok: bool = True
 
 
+# ---------- BYOK (bring-your-own model key) ----------
+
+class ProviderPublic(BaseModel):
+    provider_key: str
+    display_name: str
+    doc_url: Optional[str] = None
+    needs_model_id: bool = False
+
+
+class ModelKeyPublic(BaseModel):
+    id: str
+    provider_key: str
+    provider_display_name: str
+    alias: Optional[str] = None
+    key_last4: str
+    status: Literal["active", "invalid"]
+    is_current: bool
+    last_verified_at: Optional[str] = None
+
+
+class ModelKeysListResponse(BaseModel):
+    keys: list[ModelKeyPublic]
+
+
+class AddModelKeyRequest(BaseModel):
+    provider_key: str
+    api_key: str = Field(..., min_length=1)
+    alias: Optional[str] = None
+    model_id: Optional[str] = None
+
+
+class UpdateModelKeyRequest(BaseModel):
+    api_key: Optional[str] = None
+    alias: Optional[str] = None
+    model_id: Optional[str] = None
+
+
+class ModelPreferenceResponse(BaseModel):
+    mode: Literal["platform", "byok"]
+
+
+class SetModelPreferenceRequest(BaseModel):
+    mode: Literal["platform", "byok"]
+
+
 # ---------- Memory ----------
 
 class OrganizeMemoryRequest(BaseModel):
@@ -231,3 +279,4 @@ class OrganizeMemoryResponse(BaseModel):
     merged: list[dict] = []
     discarded: list[dict] = []
     mindmap: MindmapData
+    notice: Optional[str] = None

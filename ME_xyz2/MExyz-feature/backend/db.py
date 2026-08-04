@@ -123,6 +123,29 @@ CREATE TABLE IF NOT EXISTS mindmap_edges (
   from_id TEXT NOT NULL,
   to_id TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS user_model_keys (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  provider_key TEXT NOT NULL,
+  alias TEXT,
+  model_id TEXT,
+  api_key_cipher TEXT NOT NULL,
+  key_last4 TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  is_current INTEGER NOT NULL DEFAULT 0,
+  fail_count INTEGER NOT NULL DEFAULT 0,
+  last_verified_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(user_id, provider_key)
+);
+
+CREATE TABLE IF NOT EXISTS user_model_preference (
+  user_id TEXT PRIMARY KEY,
+  mode TEXT NOT NULL DEFAULT 'platform',
+  updated_at TEXT NOT NULL
+);
 """
 
 
