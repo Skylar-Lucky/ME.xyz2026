@@ -24,14 +24,18 @@ _GAP_ORDER = [
     ("relationship_or_scene", "关系影响或生活画面（二选一即可）"),
 ]
 
-# Soft pacing: target ~8–10 user turns (see prompt.py + Skill §2)
+# Fixed 10-turn pacing (see prompt.py)
+TARGET_TURNS = 10
+CHAT_CLOSED_TURN = 11
 PHASE_CONTAIN_MAX = 1
 PHASE_CLARIFY_MAX = 3
-PHASE_EXPLORE_MAX = 7
+PHASE_EXPLORE_MAX = 8
 
-GATE_EMOTION_MIN_TURN = 5
-GATE_WILLING_OFFER_TURN = 7
-GATE_WILLING_AUTO_TURN = 8
+GATE_EMOTION_MIN_TURN = 9
+
+CHAT_CLOSED_REPLY = (
+    "我们这一段已经够用了。点下方按钮，看看三个可能的未来自己。"
+)
 
 
 def empty_state() -> dict[str, Any]:
@@ -164,7 +168,23 @@ def derive_phase(turn: int, coverage: dict[str, bool]) -> tuple[str, list[str]]:
     return "summarize", missing
 
 
+def is_chat_closed(turn: int) -> bool:
+    return turn >= CHAT_CLOSED_TURN
+
+
+def force_ready_gate() -> dict[str, bool]:
+    return {
+        "emotion_stable": True,
+        "info_complete": True,
+        "user_willing": True,
+    }
+
+
 def gate_from_state(state: dict, turn: int) -> dict[str, bool]:
+    # After the fixed 10th user turn, always unlock persona generation.
+    if turn >= TARGET_TURNS:
+        return force_ready_gate()
+
     cov = _normalize_coverage(state.get("coverage"))
 
     info_complete = bool(
@@ -180,12 +200,8 @@ def gate_from_state(state: dict, turn: int) -> dict[str, bool]:
         and state.get("phase") in ("explore", "summarize", "clarify")
     )
 
-    user_willing = bool(state.get("future_explore_accepted"))
-    if not user_willing and turn >= GATE_WILLING_OFFER_TURN and info_complete:
-        if state.get("future_explore_offered") and turn >= GATE_WILLING_AUTO_TURN:
-            user_willing = True
-        elif state.get("future_explore_offered") and emotion_stable:
-            user_willing = True
+    # Do not unlock early: willingness only after the fixed 10-turn close.
+    user_willing = False
 
     return {
         "emotion_stable": emotion_stable,
