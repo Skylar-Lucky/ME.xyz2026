@@ -237,6 +237,30 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
     msgs = store.get_messages(uid, sid)
     prev_state = main.get("conversation_state") or conversation.empty_state()
 
+    # Turn 11+: no guided LLM dialogue; keep button unlocked.
+    if conversation.is_chat_closed(turn):
+        reply = conversation.CHAT_CLOSED_REPLY
+        last_assistant = next(
+            (m for m in reversed(msgs) if m.get("role") == "assistant"),
+            None,
+        )
+        if not last_assistant or last_assistant.get("content") != reply:
+            store.append_message(uid, sid, "assistant", reply)
+        state = prev_state
+        phase, _ = conversation.derive_phase(turn, state.get("coverage") or {})
+        main["conversation_state"] = state
+        main["gate_state"] = conversation.force_ready_gate()
+        store.save_main_session(uid, main)
+        gate = _gate(main.get("gate_state"))
+        return ChatResponse(
+            session_id=sid,
+            reply=reply,
+            gate_state=gate,
+            ready_for_personas=True,
+            turn_count=turn,
+            phase=phase,
+        )
+
     try:
         state = conversation.extract_conversation_state(msgs, prev_state)
     except Exception:
@@ -264,7 +288,14 @@ def api_chat(body: ChatRequest, user: dict = Depends(auth.get_current_user)):
     old_gate = main.get("gate_state") or {}
     new_gate = conversation.gate_from_state(state, turn)
     main["conversation_state"] = state
-    main["gate_state"] = conversation.monotonic_merge(old_gate, new_gate)
+    # After turn 10, force ready even if earlier gates were incomplete.
+    if turn >= conversation.TARGET_TURNS:
+        main["gate_state"] = conversation.force_ready_gate()
+    else:
+        merged = conversation.monotonic_merge(old_gate, new_gate)
+        # Hard rule: never unlock willingness before the fixed 10th turn.
+        merged["user_willing"] = False
+        main["gate_state"] = merged
 
     store.save_main_session(uid, main)
     gate = _gate(main.get("gate_state"))

@@ -686,7 +686,14 @@
     align-self:center; margin-top:6px; font-size:14px; color:var(--muted);
     border:1px dashed var(--hairline-strong); border-radius:var(--radius-pill); padding:8px 16px;
   }
-  .demo-trigger:hover{border-color:var(--ink); color:var(--ink);}
+  .demo-trigger:hover:not(:disabled){border-color:var(--ink); color:var(--ink);}
+  .demo-trigger:disabled{
+    opacity:.45; cursor:default; color:var(--muted-soft);
+    border-color:var(--hairline);
+  }
+  .demo-trigger.is-ready{
+    opacity:1; color:var(--ink); border-style:solid; border-color:var(--ink);
+  }
 
   /* ---------- 我的 ---------- */
   #view-profile{overflow-y:auto;}
@@ -2448,13 +2455,21 @@
   function updateRevealBtn(meta){
     if(!revealBtn) return;
     const phaseLabel = {contain:'倾诉', clarify:'校准', explore:'探索', summarize:'收束'};
-    if(meta && meta.ready_for_personas){
-      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 三道门已满足 · 生成"未来的自己"';
+    const ready = !!(meta && meta.ready_for_personas);
+    if(ready){
+      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 可以生成未来的自己';
+      revealBtn.disabled = false;
+      revealBtn.classList.add('is-ready');
     } else if(meta && meta.turn_count){
       const label = phaseLabel[meta.phase] || meta.phase || '对话';
-      revealBtn.innerHTML = `<i class="ph ph-sparkle"></i> 第${meta.turn_count}轮·${label} · 生成"未来的自己"`;
+      const n = Math.min(Number(meta.turn_count) || 0, 10);
+      revealBtn.innerHTML = `<i class="ph ph-sparkle"></i> 第${n}/10轮·${label} · 生成"未来的自己"`;
+      revealBtn.disabled = true;
+      revealBtn.classList.remove('is-ready');
     } else {
-      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 生成"未来的自己"';
+      revealBtn.innerHTML = '<i class="ph ph-sparkle"></i> 完成10轮对话后可生成';
+      revealBtn.disabled = true;
+      revealBtn.classList.remove('is-ready');
     }
   }
 
@@ -2463,8 +2478,11 @@
     if(show){
       revealBtn.style.display = '';
       if(!revealBtn.parentElement) chatBody.appendChild(revealBtn);
-      revealBtn.disabled = false;
       if(meta) updateRevealBtn(meta);
+      else {
+        revealBtn.disabled = true;
+        revealBtn.classList.remove('is-ready');
+      }
     } else {
       revealBtn.style.display = 'none';
     }
@@ -2684,7 +2702,7 @@
   });
 
   revealBtn.addEventListener('click', async ()=>{
-    if(chatBusy || activeChat.kind !== 'main') return;
+    if(chatBusy || activeChat.kind !== 'main' || revealBtn.disabled) return;
     chatBusy = true;
     revealBtn.disabled = true;
     const prev = revealBtn.innerHTML;
@@ -2697,14 +2715,15 @@
       if(!data.ready){
         const g = data.gate_state || {};
         alert(
-          '三道门尚未全部满足，再多聊聊：\n' +
+          '还需完成 10 轮对话后才能生成：\n' +
           `情绪稳住: ${g.emotion_stable ? '✓' : '✗'}\n` +
           `信息完整: ${g.info_complete ? '✓' : '✗'}\n` +
           `用户意愿: ${g.user_willing ? '✓' : '✗'}\n\n` +
-          '提示：约 8–10 轮后会引导总结并询问是否想看未来自己。'
+          '提示：完成第 10 轮对话后，按钮会点亮。'
         );
         revealBtn.innerHTML = prev;
-        revealBtn.disabled = false;
+        revealBtn.disabled = true;
+        revealBtn.classList.remove('is-ready');
         return;
       }
       cardsByMain[activeChat.id] = data.personas;
